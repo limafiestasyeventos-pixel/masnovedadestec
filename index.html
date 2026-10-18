@@ -98,8 +98,9 @@ section.catalog .wrap{padding-block:48px}
 .tile{position:relative;display:grid;place-items:center;background:hsl(var(--h) var(--tile-s) var(--tile-l));color:hsl(var(--h) 70% var(--tile-fg))}
 .card .tile{aspect-ratio:1/1;border:0;width:100%;padding:0}
 .card .tile svg{width:48%;transition:transform .3s}
+.tile img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;border-radius:inherit}
 .card:hover .tile svg{transform:scale(1.06) rotate(-3deg)}
-.badge{position:absolute;top:10px;left:10px;font-size:11px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;padding:4px 8px;border-radius:6px;background:var(--hot);color:#fff}
+.badge{z-index:1;position:absolute;top:10px;left:10px;font-size:11px;font-weight:800;letter-spacing:.04em;text-transform:uppercase;padding:4px 8px;border-radius:6px;background:var(--hot);color:#fff}
 .badge.alt{background:var(--ink);color:var(--bg)}
 .card .body{padding:14px;display:flex;flex-direction:column;gap:6px;flex:1;min-width:0}
 .card h3{font-family:var(--f-body);font-size:15px;font-weight:700;line-height:1.3}
@@ -347,10 +348,12 @@ powerbank:'<rect x="14" y="12" width="36" height="40" rx="8"/><circle cx="32" cy
 humidificador:'<path d="M20 28h24v22a6 6 0 0 1-6 6H26a6 6 0 0 1-6-6z"/><path d="M32 22c-5-4-3-9 0-14 2 5 7 7 3 14M20 38h24"/>'
 };
 const WA_ICON='<svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" d="M12 2.8a9.2 9.2 0 0 0-7.9 13.9L2.9 21.2l4.6-1.2A9.2 9.2 0 1 0 12 2.8z"/><path fill="currentColor" d="M16.3 14.1c-.2-.1-1.4-.7-1.6-.8-.2-.1-.4-.1-.5.1-.2.2-.6.8-.7.9-.1.2-.3.2-.5.1-.2-.1-1-.4-1.9-1.2-.7-.6-1.2-1.4-1.3-1.6-.1-.2 0-.4.1-.5l.4-.4.2-.4c.1-.2 0-.3 0-.4l-.7-1.8c-.2-.5-.4-.4-.5-.4h-.5c-.2 0-.4.1-.6.3-.2.2-.8.8-.8 2s.9 2.3 1 2.4c.1.2 1.7 2.6 4.1 3.6 2 .8 2.4.6 2.8.6.5 0 1.4-.6 1.6-1.1.2-.6.2-1 .1-1.1 0-.2-.2-.2-.4-.3z"/></svg>';
-const svg=id=>`<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[id]}</svg>`;
+const svg=id=>`<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONS[id]||ICONS.generic}</svg>`;
+ICONS.generic='<rect x="12" y="22" width="40" height="30" rx="4"/><path d="M12 32h40M32 22v30M24 12l8 10 8-10"/>';
+const art=p=>p.img?`<img src="${p.img}" alt="" loading="lazy">`:svg(p.icon||p.id);
 
-const CATS=[['todos','Todos'],['hogar','Hogar inteligente'],['audio','Audio'],['celular','Celular'],['gadgets','Gadgets'],['auto','Auto']];
-const P=[
+let CATS=[['todos','Todos'],['hogar','Hogar inteligente'],['audio','Audio'],['celular','Celular'],['gadgets','Gadgets'],['auto','Auto']];
+let P=[
 {id:'proyector',name:'Mini proyector 4K portátil con Android',cat:'hogar',price:189,was:299,r:4.7,n:312,h:222,tag:'Más vendido',colors:['Blanco','Negro'],desc:'Proyecta hasta 130 pulgadas en cualquier pared. Trae Android, WiFi y Bluetooth para ver YouTube y tus apps favoritas sin cables.',specs:['Android 11','WiFi 6','Hasta 130"','Parlante 5 W']},
 {id:'audifonos',name:'Audífonos inalámbricos Pro con cancelación de ruido',cat:'audio',price:79,was:139,r:4.6,n:528,h:200,tag:'Top ventas',colors:['Blanco','Negro'],desc:'Cancelación activa de ruido, modo transparencia y hasta 30 horas de batería con el estuche. Compatibles con Android y iPhone.',specs:['Bluetooth 5.3','ANC','30 h','IPX5']},
 {id:'luna',name:'Lámpara luna 3D de 16 colores',cat:'hogar',price:49,was:89,r:4.8,n:240,h:42,tag:'Ideal para regalo',colors:['15 cm','18 cm'],desc:'Lámpara con textura real de la luna, 16 colores y control remoto. Recargable por USB. Perfecta para dormitorio o regalo.',specs:['16 colores','Control remoto','USB-C','Base de madera']},
@@ -364,7 +367,7 @@ const P=[
 {id:'powerbank',name:'Power bank magnético 10 000 mAh',cat:'celular',price:85,was:139,r:4.6,n:233,h:150,tag:'',colors:['Blanco','Morado','Negro'],desc:'Se pega a tu celular con imán y carga sin cables. Delgado, liviano y con carga rápida por USB-C.',specs:['10 000 mAh','20 W','Magnético','USB-C']},
 {id:'humidificador',name:'Humidificador difusor efecto llama',cat:'hogar',price:65,was:109,r:4.7,n:164,h:16,tag:'Viral',colors:['Negro','Blanco'],desc:'Humidificador y difusor de aromas con efecto de llama realista. Silencioso y con apagado automático.',specs:['180 ml','Ultrasónico','Apagado auto','2 modos de luz']}
 ];
-const DEAL='proyector';
+let DEAL='proyector';
 const FREE=99, SHIP={lima:10,prov:15};
 const DEPS=['Lima','Callao','Amazonas','Áncash','Apurímac','Arequipa','Ayacucho','Cajamarca','Cusco','Huancavelica','Huánuco','Ica','Junín','La Libertad','Lambayeque','Loreto','Madre de Dios','Moquegua','Pasco','Piura','Puno','San Martín','Tacna','Tumbes','Ucayali'];
 const soles=n=>'S/ '+n.toFixed(2);
@@ -374,7 +377,6 @@ const $=s=>document.querySelector(s);
 
 let cat='todos', query='', cart=[];
 try{cart=JSON.parse(localStorage.getItem('mnt-cart')||'[]').filter(l=>byId(l.id))}catch(e){cart=[]}
-if(!cart.length) cart=[{id:'audifonos',v:'Blanco',q:1}];
 const save=()=>{try{localStorage.setItem('mnt-cart',JSON.stringify(cart))}catch(e){}};
 
 function stars(r){return '<b>'+'★'.repeat(Math.round(r))+'</b>'+'☆'.repeat(5-Math.round(r))}
@@ -387,11 +389,11 @@ function renderGrid(){
   const list=P.filter(p=>(cat==='todos'||p.cat===cat)&&(!q||p.name.toLowerCase().includes(q)));
   $('#grid').innerHTML=list.length?list.map(p=>`
     <article class="card">
-      <button class="tile" style="--h:${p.h}" data-view="${p.id}" aria-label="Ver ${p.name}">${p.tag?`<span class="badge${p.tag==='Nuevo'?' alt':''}">${p.tag}</span>`:''}${svg(p.id)}</button>
+      <button class="tile" style="--h:${p.h}" data-view="${p.id}" aria-label="Ver ${p.name}">${p.tag?`<span class="badge${p.tag==='Nuevo'?' alt':''}">${p.tag}</span>`:''}${art(p)}</button>
       <div class="body">
         <span class="stars">${stars(p.r)} ${p.r} · ${p.n} reseñas</span>
         <h3>${p.name}</h3>
-        <div class="price"><span class="now">${soles(p.price)}</span><span class="was">${soles(p.was)}</span><span class="off">-${off(p)}%</span></div>
+        <div class="price"><span class="now">${soles(p.price)}</span>${p.was>p.price?`<span class="was">${soles(p.was)}</span>`:""}${off(p)>0?`<span class="off">-${off(p)}%</span>`:""}</div>
         <div class="card-actions">
           <button class="add" data-add="${p.id}">Agregar al carrito</button>
           <a class="wa-mini" href="${waUrl(waProduct(p,p.colors[0],1))}" target="_blank" rel="noopener" aria-label="Pedir ${p.name} por WhatsApp" title="Pedir por WhatsApp">${WA_ICON}</a>
@@ -403,9 +405,9 @@ function renderDeal(){
   const p=byId(DEAL);
   $('#dealCard').innerHTML=`
     <div class="deal-top"><span class="label">Oferta del día · -${off(p)}%</span><span class="timer" id="timer">00:00:00</span></div>
-    <div class="tile" style="--h:${p.h}">${svg(p.id)}</div>
+    <div class="tile" style="--h:${p.h}">${art(p)}</div>
     <h3>${p.name}</h3>
-    <div class="price"><span class="now">${soles(p.price)}</span><span class="was">${soles(p.was)}</span><span class="stars">${stars(p.r)} ${p.n} reseñas</span></div>
+    <div class="price"><span class="now">${soles(p.price)}</span>${p.was>p.price?`<span class="was">${soles(p.was)}</span>`:""}<span class="stars">${stars(p.r)} ${p.n} reseñas</span></div>
     <button class="btn primary block" data-view="${p.id}">Lo quiero</button>`;
 }
 function tick(){
@@ -423,12 +425,12 @@ function openProduct(id){
   const p=byId(id); let v=p.colors[0], q=1;
   const m=$('#modal');
   const draw=()=>{m.innerHTML=`
-    <div class="tile" style="--h:${p.h}">${p.tag?`<span class="badge">${p.tag}</span>`:''}${svg(p.id)}</div>
+    <div class="tile" style="--h:${p.h}">${p.tag?`<span class="badge">${p.tag}</span>`:''}${art(p)}</div>
     <div class="info">
       <button class="x" data-close aria-label="Cerrar">✕</button>
       <span class="stars">${stars(p.r)} ${p.r} · ${p.n} reseñas</span>
       <h2 id="m-title">${p.name}</h2>
-      <div class="price"><span class="now">${soles(p.price)}</span><span class="was">${soles(p.was)}</span><span class="off">Ahorras ${soles(p.was-p.price)}</span></div>
+      <div class="price"><span class="now">${soles(p.price)}</span>${p.was>p.price?`<span class="was">${soles(p.was)}</span>`:""}<span class="off">Ahorras ${soles(p.was-p.price)}</span></div>
       <p class="desc">${p.desc}</p>
       <ul class="specs">${p.specs.map(s=>`<li>${s}</li>`).join('')}</ul>
       <div><span class="label">Opción: ${v}</span><div class="opts" style="margin-top:6px">${p.colors.map(c=>`<button class="opt" data-v="${c}" aria-pressed="${c===v}">${c}</button>`).join('')}</div></div>
@@ -468,7 +470,7 @@ function renderCart(){
   if(!cart.length){body.innerHTML='<p class="empty">Tu carrito está vacío.<br>Agrega algo novedoso del catálogo.</p>';foot.innerHTML='<button class="btn ghost block" data-close>Seguir comprando</button>';return}
   body.innerHTML=cart.map((l,i)=>{const p=byId(l.id);return `
     <div class="line">
-      <div class="tile" style="--h:${p.h}">${svg(p.id)}</div>
+      <div class="tile" style="--h:${p.h}">${art(p)}</div>
       <div style="min-width:0"><h4>${p.name}</h4><small>${l.v}</small><br>
         <span class="qty"><button data-cq="${i}:-1" aria-label="Menos">−</button><span>${l.q}</span><button data-cq="${i}:1" aria-label="Más">+</button></span>
       </div>
@@ -546,7 +548,52 @@ function waCart(t){
   return `Hola MasNovedadesTEC, quiero hacer este pedido:\n\n${items}\n\nSubtotal: ${soles(t.sub)}\nEnvío: ${t.ship?soles(t.ship):'Gratis'}\nTotal: ${soles(t.total)}\n\nMi distrito es: `;
 }
 
+/* Productos desde Google Sheets: pega aquí el enlace CSV de tu hoja publicada
+   (Archivo > Compartir > Publicar en la web > Valores separados por comas).
+   Si queda vacío o la hoja no carga, la tienda usa la lista de productos de arriba. */
+const SHEET_URL='productos.csv';
+const CAT_LABELS={hogar:'Hogar inteligente',audio:'Audio',celular:'Celular',gadgets:'Gadgets',auto:'Auto'};
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const num=s=>parseFloat(String(s).replace(',','.').replace(/[^0-9.]/g,''))||0;
+const list=s=>String(s||'').split('|').map(x=>esc(x.trim())).filter(Boolean);
+const hue=s=>[...s].reduce((h,c)=>(h*31+c.charCodeAt(0))%360,7);
+function parseCSV(t){
+  const rows=[];let row=[],f='',q=false;
+  for(let i=0;i<t.length;i++){const c=t[i];
+    if(q){if(c==='"'){if(t[i+1]==='"'){f+='"';i++}else q=false}else f+=c}
+    else if(c==='"')q=true;
+    else if(c===','){row.push(f);f=''}
+    else if(c==='\n'){row.push(f);rows.push(row);row=[];f=''}
+    else if(c!=='\r')f+=c}
+  if(f||row.length){row.push(f);rows.push(row)}
+  return rows;
+}
+async function loadSheet(){
+  if(!SHEET_URL) return;
+  try{
+    const res=await fetch(SHEET_URL,{cache:'no-store'});
+    if(!res.ok) throw new Error('HTTP '+res.status);
+    const [head,...rows]=parseCSV(await res.text());
+    const keys=head.map(h=>h.trim().toLowerCase());
+    const items=rows.map(r=>Object.fromEntries(keys.map((k,i)=>[k,(r[i]||'').trim()])))
+      .filter(o=>o.nombre&&o.precio&&!/^no$/i.test(o.activo));
+    if(!items.length) return;
+    P=items.map((o,i)=>{
+      const id=(o.id||'').toLowerCase().replace(/[^a-z0-9_-]/g,'')||'p'+i, price=num(o.precio), opts=list(o.opciones);
+      return {id,name:esc(o.nombre),cat:esc((o.categoria||'otros').toLowerCase()),price,was:Math.max(num(o.precio_antes),price),
+        r:num(o.estrellas)||5,n:Math.round(num(o.resenas)),h:hue(id),tag:esc(o.etiqueta),colors:opts.length?opts:['Única'],
+        desc:esc(o.descripcion),specs:list(o.caracteristicas),img:/^https:\/\//i.test(o.foto)?esc(o.foto):'',icon:o.icono||id,
+        feat:/^s[ií]$/i.test(o.destacado)};
+    });
+    DEAL=(P.find(p=>p.feat)||P[0]).id;
+    CATS=[['todos','Todos'],...[...new Set(P.map(p=>p.cat))].map(c=>[c,CAT_LABELS[c]||c.charAt(0).toUpperCase()+c.slice(1)])];
+    cat='todos';cart=cart.filter(l=>byId(l.id));save();
+    renderChips();renderGrid();renderDeal();renderCount();tick();
+  }catch(e){console.warn('No se pudo leer Google Sheets; se usan los productos guardados.',e)}
+}
+
 renderChips();renderGrid();renderDeal();renderCount();tick();setInterval(tick,1000);
+loadSheet();
 </script>
 
 </html>
