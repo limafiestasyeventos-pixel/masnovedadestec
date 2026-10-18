@@ -285,7 +285,7 @@ footer .wrap{padding-block:28px;display:flex;justify-content:space-between;gap:1
 
 <footer><div class="wrap">
   <span><b>MasNovedadesTEC</b> · Tienda online de tecnología novedosa · Lima, Perú</span>
-  <span>Libro de Reclamaciones · Términos y condiciones · Políticas de envío y devolución</span>
+  <span>Libro de Reclamaciones · Términos y condiciones · Políticas de envío y devolución · <a href="admin.html" style="color:inherit">Administrar</a></span>
 </div></footer>
 
 <a class="wa" id="waLink" href="https://wa.me/" target="_blank" rel="noopener" aria-label="Escríbenos por WhatsApp">
@@ -376,7 +376,9 @@ const byId=id=>P.find(p=>p.id===id);
 const $=s=>document.querySelector(s);
 
 let cat='todos', query='', cart=[];
-try{cart=JSON.parse(localStorage.getItem('mnt-cart')||'[]').filter(l=>byId(l.id))}catch(e){cart=[]}
+let savedCart=[];
+try{savedCart=JSON.parse(localStorage.getItem('mnt-cart')||'[]')||[]}catch(e){savedCart=[]}
+cart=savedCart.filter(l=>byId(l.id));
 const save=()=>{try{localStorage.setItem('mnt-cart',JSON.stringify(cart))}catch(e){}};
 
 function stars(r){return '<b>'+'★'.repeat(Math.round(r))+'</b>'+'☆'.repeat(5-Math.round(r))}
@@ -385,6 +387,7 @@ function renderChips(){
   $('#chips').innerHTML=CATS.map(([k,l])=>`<button class="chip" data-cat="${k}" aria-pressed="${k===cat}">${l}</button>`).join('');
 }
 function renderGrid(){
+  if(loading){$('#grid').innerHTML='<p class="empty">Cargando productos…</p>';return}
   const q=query.trim().toLowerCase();
   const list=P.filter(p=>(cat==='todos'||p.cat===cat)&&(!q||p.name.toLowerCase().includes(q)));
   $('#grid').innerHTML=list.length?list.map(p=>`
@@ -403,6 +406,7 @@ function renderGrid(){
 }
 function renderDeal(){
   const p=byId(DEAL);
+  if(!p){$('#dealCard').innerHTML='<p class="empty">Cargando la oferta del día…</p>';return}
   $('#dealCard').innerHTML=`
     <div class="deal-top"><span class="label">Oferta del día · -${off(p)}%</span><span class="timer" id="timer">00:00:00</span></div>
     <div class="tile" style="--h:${p.h}">${art(p)}</div>
@@ -422,7 +426,8 @@ function show(el){closeAll();openEl=el;el.hidden=false;$('#scrim').hidden=false;
 function closeAll(){[$('#cart'),$('#checkout'),$('#modal')].forEach(e=>e.hidden=true);$('#scrim').hidden=true;document.body.style.overflow='';openEl=null}
 
 function openProduct(id){
-  const p=byId(id); let v=p.colors[0], q=1;
+  const p=byId(id); if(!p) return;
+  let v=p.colors[0], q=1;
   const m=$('#modal');
   const draw=()=>{m.innerHTML=`
     <div class="tile" style="--h:${p.h}">${p.tag?`<span class="badge">${p.tag}</span>`:''}${art(p)}</div>
@@ -568,6 +573,24 @@ function parseCSV(t){
   if(f||row.length){row.push(f);rows.push(row)}
   return rows;
 }
+/* Mientras llega la hoja se muestra la última versión guardada en este navegador,
+   o "Cargando productos…" la primera vez; si la hoja falla, se usan los productos de arriba. */
+const DEFAULT_DATA={P,DEAL,CATS}, CATALOG_KEY='mnt-catalogo';
+let loading=false;
+function applyData(d){
+  P=d.P;DEAL=d.DEAL;CATS=d.CATS;loading=false;
+  if(!CATS.some(([k])=>k===cat)) cat='todos';
+  const merged=[...cart,...savedCart.filter(l=>!cart.some(x=>x.id===l.id&&x.v===l.v))];
+  cart=merged.filter(l=>byId(l.id));save();
+  renderChips();renderGrid();renderDeal();renderCount();tick();
+}
+if(SHEET_URL){
+  let cached=null;
+  try{cached=JSON.parse(localStorage.getItem(CATALOG_KEY))}catch(e){}
+  if(cached&&cached.P&&cached.P.length){P=cached.P;DEAL=cached.DEAL;CATS=cached.CATS}
+  else{P=[];CATS=[['todos','Todos']];loading=true}
+  cart=savedCart.filter(l=>byId(l.id));
+}
 async function loadSheet(){
   if(!SHEET_URL) return;
   try{
@@ -577,19 +600,22 @@ async function loadSheet(){
     const keys=head.map(h=>h.trim().toLowerCase());
     const items=rows.map(r=>Object.fromEntries(keys.map((k,i)=>[k,(r[i]||'').trim()])))
       .filter(o=>o.nombre&&o.precio&&!/^no$/i.test(o.activo));
-    if(!items.length) return;
-    P=items.map((o,i)=>{
+    if(!items.length) throw new Error('La hoja no tiene productos activos');
+    const P2=items.map((o,i)=>{
       const id=(o.id||'').toLowerCase().replace(/[^a-z0-9_-]/g,'')||'p'+i, price=num(o.precio), opts=list(o.opciones);
       return {id,name:esc(o.nombre),cat:esc((o.categoria||'otros').toLowerCase()),price,was:Math.max(num(o.precio_antes),price),
         r:num(o.estrellas)||5,n:Math.round(num(o.resenas)),h:hue(id),tag:esc(o.etiqueta),colors:opts.length?opts:['Única'],
         desc:esc(o.descripcion),specs:list(o.caracteristicas),img:/^https:\/\//i.test(o.foto)?esc(o.foto):'',icon:o.icono||id,
         feat:/^s[ií]$/i.test(o.destacado)};
     });
-    DEAL=(P.find(p=>p.feat)||P[0]).id;
-    CATS=[['todos','Todos'],...[...new Set(P.map(p=>p.cat))].map(c=>[c,CAT_LABELS[c]||c.charAt(0).toUpperCase()+c.slice(1)])];
-    cat='todos';cart=cart.filter(l=>byId(l.id));save();
-    renderChips();renderGrid();renderDeal();renderCount();tick();
-  }catch(e){console.warn('No se pudo leer Google Sheets; se usan los productos guardados.',e)}
+    const data={P:P2,DEAL:(P2.find(p=>p.feat)||P2[0]).id,
+      CATS:[['todos','Todos'],...[...new Set(P2.map(p=>p.cat))].map(c=>[c,CAT_LABELS[c]||c.charAt(0).toUpperCase()+c.slice(1)])]};
+    try{localStorage.setItem(CATALOG_KEY,JSON.stringify(data))}catch(e){}
+    applyData(data);
+  }catch(e){
+    console.warn('No se pudo leer Google Sheets; se usan los productos guardados.',e);
+    if(loading) applyData(DEFAULT_DATA);
+  }
 }
 
 renderChips();renderGrid();renderDeal();renderCount();tick();setInterval(tick,1000);
