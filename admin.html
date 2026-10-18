@@ -49,7 +49,9 @@ header .wrap{display:flex;align-items:center;justify-content:space-between;gap:1
 .btn[disabled]{opacity:.6;cursor:wait}
 
 /* login */
-.login{min-height:calc(100vh - 120px);display:grid;place-items:center;padding-block:32px}
+.login{min-height:calc(100vh - 120px);display:grid;place-items:center;padding-block:32px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.head-actions{flex:none}
+@media (max-width:480px){.logo{font-size:15px;min-width:0}.logo small{display:none}}
 .card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:24px;width:min(400px,100%);display:grid;gap:14px;box-shadow:var(--shadow)}
 .field{display:grid;gap:4px}
 .field label{font-size:13px;font-weight:700}
