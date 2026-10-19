@@ -143,6 +143,8 @@ details[open] summary::after{content:"–"}
 details p{color:var(--muted);margin:8px 0 0}
 
 footer{border-top:1px solid var(--line);background:var(--surface);font-size:13px;color:var(--muted)}
+.admin-link{color:var(--muted);opacity:.35;display:inline-grid;place-items:center;padding:4px;border-radius:6px}
+.admin-link:hover,.admin-link:focus-visible{opacity:1}
 footer .wrap{padding-block:28px;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
 
 /* overlays */
@@ -294,7 +296,8 @@ footer .wrap{padding-block:28px;display:flex;justify-content:space-between;gap:1
 
 <footer><div class="wrap">
   <span><b>MasNovedadesTEC</b> · Tienda online de tecnología novedosa · Lima, Perú</span>
-  <span>Libro de Reclamaciones · Términos y condiciones · Políticas de envío y devolución · <a href="admin.html" style="color:inherit">Administrar</a></span>
+  <span>Libro de Reclamaciones · Términos y condiciones · Políticas de envío y devolución</span>
+  <a class="admin-link" href="admin.html" aria-label="Administrar"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></a>
 </div></footer>
 
 <a class="wa" id="waLink" href="https://wa.me/" target="_blank" rel="noopener" aria-label="Escríbenos por WhatsApp">
