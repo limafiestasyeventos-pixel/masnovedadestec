@@ -90,6 +90,19 @@ main .wrap{padding-block:24px 64px;display:grid;gap:16px}
 .actions{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
 .confirm{display:flex;gap:6px;align-items:center;font-size:13px;font-weight:700;color:var(--hot)}
 @media (max-width:700px){.row{grid-template-columns:56px minmax(0,1fr)}.thumb{width:56px;height:56px}.actions{grid-column:1/-1;justify-content:flex-start}}
+.tabs{display:flex;gap:4px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:4px;justify-self:start}
+.tab{border:0;background:transparent;border-radius:9px;padding:8px 18px;font-weight:700;color:var(--muted)}
+.tab[aria-selected="true"]{background:var(--accent);color:var(--accent-ink)}
+.order{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px;display:grid;gap:8px}
+.order-head{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;align-items:center}
+.order-head b{font-family:var(--f-mono)}
+.order p{margin:0;font-size:14px;overflow-wrap:anywhere}
+.order-foot{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center}
+.order-foot select{background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:6px 8px}
+.pill.paid{background:var(--ok);border-color:var(--ok);color:#fff}
+.pill.wait{color:var(--warn);border-color:currentColor}
+.pill.done{color:var(--ok);border-color:currentColor}
+.pill.cancel{color:var(--muted);text-decoration:line-through}
 .empty{text-align:center;color:var(--muted);padding:40px 16px;background:var(--surface);border:1px dashed var(--line);border-radius:14px}
 
 /* editor sheet */
@@ -135,6 +148,20 @@ main .wrap{padding-block:24px 64px;display:grid;gap:16px}
 </section>
 
 <main id="appView" hidden><div class="wrap">
+  <div class="tabs" role="tablist">
+    <button class="tab" role="tab" aria-selected="true" data-tab="productos">Productos</button>
+    <button class="tab" role="tab" aria-selected="false" data-tab="pedidos">Pedidos</button>
+  </div>
+  <section id="ordersView" hidden>
+    <div class="top">
+      <div><p class="label">Pedidos</p><h1>Tus ventas</h1></div>
+      <button class="btn" id="reloadOrders">Actualizar</button>
+    </div>
+    <div class="stats" id="orderStats"></div>
+    <p class="notice">Los pagos con Mercado Pago se marcan como <b>Pagado</b> solos y descuentan el stock. Para contraentrega, cambia el estado a <b>Confirmado</b> o <b>Enviado</b> y el stock se descuenta. Si cancelas un pedido, el stock se devuelve.</p>
+    <div class="list" id="orders"><p class="empty">Cargando pedidos…</p></div>
+  </section>
+  <section id="productsView" style="display:grid;gap:16px">
   <div class="top">
     <div><p class="label">Productos</p><h1>Tu catálogo</h1></div>
     <button class="btn primary" id="addBtn">+ Agregar producto</button>
@@ -148,6 +175,7 @@ main .wrap{padding-block:24px 64px;display:grid;gap:16px}
     <button class="btn" id="reload">Actualizar</button>
   </div>
   <div class="list" id="list"><p class="empty">Cargando productos…</p></div>
+  </section>
 </div></main>
 
 <div class="scrim" id="scrim" hidden></div>
@@ -397,6 +425,54 @@ $('#editForm').addEventListener('submit',async e=>{
     toast(editing?'Producto actualizado':'Producto agregado');closeSheet();await load();
   }catch(x){fail(x.message)}
   finally{busy(btn,false,'Guardar producto')}
+});
+
+/* pedidos */
+const ESTADOS=['Por confirmar','Pendiente de pago','Pagado','Confirmado','Enviado','Entregado','Cancelado'];
+let orders=[];
+function estadoPill(e){
+  const c=e==='Pagado'?'paid':e==='Entregado'||e==='Enviado'||e==='Confirmado'?'done':e==='Cancelado'?'cancel':'wait';
+  return `<span class="pill ${c}">${esc(e)}</span>`;
+}
+async function loadOrders(){
+  $('#orders').innerHTML='<p class="empty">Cargando pedidos…</p>';
+  try{const j=await api('listarPedidos');orders=j.pedidos;renderOrders()}
+  catch(x){$('#orders').innerHTML=`<p class="empty">No se pudieron cargar los pedidos: ${esc(x.message)}</p>`}
+}
+function renderOrders(){
+  const paid=orders.filter(o=>['Pagado','Confirmado','Enviado','Entregado'].includes(o.estado));
+  const toShip=orders.filter(o=>['Pagado','Confirmado','Por confirmar'].includes(o.estado)).length;
+  $('#orderStats').innerHTML=`<span><b>${orders.length}</b> pedidos</span><span><b>${toShip}</b> por despachar</span><span>Vendido: <b>${soles(paid.reduce((s,o)=>s+Number(o.total||0),0))}</b></span>`;
+  if(!orders.length){$('#orders').innerHTML='<p class="empty">Todavía no hay pedidos. Aparecerán aquí cuando un cliente pague o pida contraentrega.</p>';return}
+  $('#orders').innerHTML=orders.map(o=>{
+    const tel=String(o.celular||'').replace(/\D/g,'');
+    return `<article class="order">
+      <div class="order-head"><span><b>${esc(o.pedido)}</b> <span class="muted" style="font-size:13px">· ${esc(o.fecha)}</span></span>${estadoPill(o.estado)}</div>
+      <p><b>${esc(o.nombre)}</b> · ${esc(o.celular)} · ${esc(o.metodo)}</p>
+      <p class="muted">${esc(o.direccion)}, ${esc(o.distrito)}, ${esc(o.departamento)}</p>
+      <p>${esc(String(o.productos||'').split(' | ').join(' · '))}</p>
+      <div class="order-foot">
+        <span class="price">${soles(o.total)}${Number(o.envio)?` <span class="muted" style="font-size:12px">(envío ${soles(o.envio)})</span>`:''}</span>
+        <span style="display:flex;gap:6px;flex-wrap:wrap">
+          ${tel?`<a class="btn sm" href="https://wa.me/51${tel}" target="_blank" rel="noopener">WhatsApp</a>`:''}
+          <select data-order="${esc(o.pedido)}" aria-label="Cambiar estado del pedido ${esc(o.pedido)}">${ESTADOS.map(s=>`<option${s===o.estado?' selected':''}>${s}</option>`).join('')}</select>
+        </span>
+      </div></article>`;
+  }).join('');
+}
+$('#orders').addEventListener('change',async e=>{
+  const s=e.target.closest('select[data-order]');if(!s)return;
+  s.disabled=true;
+  try{await api('estadoPedido',{pedido:s.dataset.order,estado:s.value});toast('Estado actualizado: '+s.value);await loadOrders()}
+  catch(x){toast(x.message,true);s.disabled=false}
+});
+$('#reloadOrders').onclick=loadOrders;
+document.querySelector('.tabs').addEventListener('click',e=>{
+  const b=e.target.closest('[data-tab]');if(!b)return;
+  document.querySelectorAll('.tab').forEach(t=>t.setAttribute('aria-selected',t===b));
+  const orders=b.dataset.tab==='pedidos';
+  $('#ordersView').hidden=!orders;$('#productsView').hidden=orders;
+  if(orders) loadOrders(); else load();
 });
 
 if(!API_URL) $('#setupNotice').hidden=false;
