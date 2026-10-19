@@ -82,6 +82,9 @@ main .wrap{padding-block:24px 64px;display:grid;gap:16px}
 .pill.on{color:var(--ok);border-color:currentColor}
 .pill.off{color:var(--muted)}
 .pill.star{color:var(--warn);border-color:currentColor}
+.pill.low{color:var(--hot);border-color:currentColor}
+.pill.out{background:var(--hot);border-color:var(--hot);color:#fff}
+.notice.warn{background:transparent;border:1px solid var(--hot);color:var(--ink)}
 .price{font-family:var(--f-mono);font-weight:600}
 .price s{color:var(--muted);font-weight:500;margin-left:6px;font-size:12px}
 .actions{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
@@ -138,6 +141,7 @@ main .wrap{padding-block:24px 64px;display:grid;gap:16px}
   </div>
   <div class="stats" id="stats"></div>
   <p class="notice">Los cambios se guardan al instante en tu hoja. En la tienda aparecen en unos 5 minutos.</p>
+  <p class="notice warn" id="stockNotice" hidden>Para controlar el stock, abre tu hoja de Google y escribe <b>stock</b> en la primera celda vacía de la fila 1 (columna P). Luego toca <b>Actualizar</b>.</p>
   <div class="tools">
     <input id="search" type="search" placeholder="Buscar producto…" aria-label="Buscar producto">
     <select id="catFilter" aria-label="Filtrar por categoría"></select>
@@ -173,6 +177,8 @@ main .wrap{padding-block:24px 64px;display:grid;gap:16px}
       <div class="field"><label for="f-precio">Precio (S/)</label><input id="f-precio" type="number" min="0" step="0.1" inputmode="decimal" required placeholder="149"></div>
       <div class="field"><label for="f-antes">Precio antes (S/)</label><input id="f-antes" type="number" min="0" step="0.1" inputmode="decimal" placeholder="229"></div>
     </div>
+    <div class="field"><label for="f-stock">Stock (unidades disponibles)</label><input id="f-stock" type="number" min="0" step="1" inputmode="numeric" placeholder="Ej. 15">
+      <span class="hint">Con 20 o menos, la tienda muestra "¡Solo quedan…!". Con 0 sale como agotado. Déjalo vacío si no quieres controlar stock.</span></div>
     <div class="field"><label for="f-etiqueta">Etiqueta</label><input id="f-etiqueta" list="etiquetas" placeholder="Ej. Nuevo, Oferta, Más vendido">
       <datalist id="etiquetas"><option value="Nuevo"><option value="Oferta"><option value="Más vendido"><option value="Top ventas"><option value="Viral"><option value="Ideal para regalo"></datalist>
     </div>
@@ -206,6 +212,14 @@ const toPipes=s=>String(s||'').split(',').map(x=>x.trim()).filter(Boolean).join(
 const toCommas=s=>String(s||'').split('|').map(x=>x.trim()).filter(Boolean).join(', ');
 const isOn=v=>!/^no$/i.test(String(v).trim());
 const isYes=v=>/^s[ií]$/i.test(String(v).trim());
+const LOW_STOCK=20;
+const stockOf=p=>p.stock===undefined||String(p.stock).trim()===''?null:Math.max(0,parseInt(p.stock)||0);
+function stockPill(p){
+  const s=stockOf(p);
+  if(s===null) return '';
+  if(s===0) return '<span class="pill out">Agotado</span>';
+  return `<span class="pill${s<=LOW_STOCK?' low':''}">Stock: ${s}</span>`;
+}
 
 let token=null, products=[], editing=null, pendingPhoto=null, confirmId=null;
 try{token=sessionStorage.getItem('mnt-admin')}catch(e){}
@@ -253,7 +267,9 @@ function render(){
   f.innerHTML='<option value="">Todas las categorías</option>'+cats().map(c=>`<option value="${esc(c)}">${esc(catLabel(c))}</option>`).join('');
   f.value=cats().includes(cur)?cur:'';
   const vis=products.filter(p=>isOn(p.activo)).length, deal=products.find(p=>isYes(p.destacado));
-  $('#stats').innerHTML=`<span><b>${products.length}</b> productos</span><span><b>${vis}</b> visibles</span><span><b>${cats().length}</b> categorías</span><span>Oferta del día: <b>${esc(deal?deal.nombre:'ninguna')}</b></span>`;
+  const out=products.filter(p=>stockOf(p)===0).length, low=products.filter(p=>{const s=stockOf(p);return s!==null&&s>0&&s<=LOW_STOCK}).length;
+  $('#stats').innerHTML=`<span><b>${products.length}</b> productos</span><span><b>${vis}</b> visibles</span><span><b>${cats().length}</b> categorías</span>${out?`<span style="color:var(--hot)"><b>${out}</b> agotados</span>`:''}${low?`<span><b>${low}</b> con pocas unidades</span>`:''}<span>Oferta del día: <b>${esc(deal?deal.nombre:'ninguna')}</b></span>`;
+  $('#stockNotice').hidden=!products.length||products.some(p=>'stock' in p);
   const q=$('#search').value.trim().toLowerCase(), c=f.value;
   const rows=products.filter(p=>(!c||String(p.categoria).toLowerCase()===c)&&(!q||String(p.nombre).toLowerCase().includes(q)));
   if(!products.length){$('#list').innerHTML='<p class="empty">Aún no tienes productos. Toca <b>+ Agregar producto</b> para crear el primero.</p>';return}
@@ -263,7 +279,8 @@ function render(){
     const was=Number(p.precio_antes)>Number(p.precio)?`<s>${soles(p.precio_antes)}</s>`:'';
     const acts=confirmId===String(p.id)
       ?`<span class="confirm">¿Eliminar este producto?<button class="btn sm danger" data-del="${id}">Sí, eliminar</button><button class="btn sm" data-cancel>No</button></span>`
-      :`<button class="btn sm" data-edit="${id}">Editar</button>
+      :`${stockOf(p)>0?`<button class="btn sm" data-sold="${id}" title="Resta 1 al stock">Vendí 1</button>`:''}
+        <button class="btn sm" data-edit="${id}">Editar</button>
         <button class="btn sm" data-toggle="${id}">${on?'Ocultar':'Mostrar'}</button>
         ${star?'':`<button class="btn sm" data-star="${id}">★ Oferta del día</button>`}
         <button class="btn sm danger" data-ask="${id}" aria-label="Eliminar ${esc(p.nombre)}">Eliminar</button>`;
@@ -273,6 +290,7 @@ function render(){
         <div class="meta"><span class="price">${soles(p.precio)}${was}</span>
           <span class="pill">${esc(catLabel(String(p.categoria||'').toLowerCase()))}</span>
           <span class="pill ${on?'on':'off'}">${on?'Visible':'Oculto'}</span>
+          ${stockPill(p)}
           ${star?'<span class="pill star">★ Oferta del día</span>':''}</div></div>
       <div class="actions">${acts}</div></article>`;
   }).join('');
@@ -290,6 +308,7 @@ $('#list').addEventListener('click',async e=>{
   try{
     busy(b,true);
     if(b.dataset.toggle){const p=byId(b.dataset.toggle);await api('guardar',{producto:{id:p.id,nombre:p.nombre,precio:p.precio,activo:isOn(p.activo)?'NO':'SI'}});toast(isOn(p.activo)?'Producto oculto':'Producto visible')}
+    if(b.dataset.sold){const p=byId(b.dataset.sold),s=Math.max(0,stockOf(p)-1);await api('guardar',{producto:{id:p.id,nombre:p.nombre,precio:p.precio,stock:s}});toast(s?`Stock actualizado: quedan ${s}`:'Stock en 0: el producto sale como agotado')}
     if(b.dataset.star){await api('destacar',{id:b.dataset.star});toast('Oferta del día actualizada')}
     if(b.dataset.del){await api('eliminar',{id:b.dataset.del});confirmId=null;toast('Producto eliminado')}
     await load();
@@ -320,6 +339,7 @@ function openSheet(p){
   $('#f-estrellas').value=p&&p.estrellas?p.estrellas:'';
   $('#f-resenas').value=p&&p.resenas!==''?p.resenas:'';
   $('#f-activo').checked=p?isOn(p.activo):true;
+  $('#f-stock').value=p&&stockOf(p)!==null?stockOf(p):'';
   $('#f-foto').value=p&&/^https:\/\//i.test(p.foto)?p.foto:'';
   setPreview($('#f-foto').value);
   $('#scrim').hidden=false;$('#sheet').hidden=false;$('#f-nombre').focus();
@@ -369,7 +389,8 @@ $('#editForm').addEventListener('submit',async e=>{
     if(pendingPhoto){btn.textContent='Subiendo foto…';foto=(await api('subirFoto',{nombre,datos:pendingPhoto.datos,tipo:pendingPhoto.tipo})).url}
     const producto={nombre,categoria:cat,precio,precio_antes:antes,etiqueta:$('#f-etiqueta').value.trim(),
       opciones:toPipes($('#f-opciones').value),descripcion:$('#f-desc').value.trim(),caracteristicas:toPipes($('#f-carac').value),
-      foto,estrellas:parseFloat($('#f-estrellas').value)||'',resenas:parseInt($('#f-resenas').value)||'',activo:$('#f-activo').checked?'SI':'NO'};
+      foto,estrellas:parseFloat($('#f-estrellas').value)||'',resenas:parseInt($('#f-resenas').value)||'',
+      stock:$('#f-stock').value.trim()===''?'':Math.max(0,parseInt($('#f-stock').value)||0),activo:$('#f-activo').checked?'SI':'NO'};
     if(editing) producto.id=editing.id;
     btn.textContent='Guardando…';
     await api('guardar',{producto});
