@@ -53,7 +53,11 @@ function doPost(e) {
     if (req.accion === 'verificarPedido') return json(verificarPedido(req.pedido));
 
     // Acciones del panel (requieren sesión)
-    if (!sesionValida(req.token)) return json({ ok: false, error: 'SESION' });
+    const s = sesion(req.token);
+    if (!s) return json({ ok: false, error: 'SESION' });
+    if (SOLO_DUENO.indexOf(req.accion) >= 0 && s.rol !== 'dueno') {
+      return json({ ok: false, error: 'Solo el dueño de la tienda puede hacer esto' });
+    }
     switch (req.accion) {
       case 'listar': return json({ ok: true, productos: leerProductos() });
       case 'guardar': return json(guardarProducto(req.producto || {}));
@@ -62,6 +66,11 @@ function doPost(e) {
       case 'subirFoto': return json(subirFoto(req));
       case 'listarPedidos': return json({ ok: true, pedidos: listarPedidos() });
       case 'estadoPedido': return json(cambiarEstadoPedido(req.pedido, req.estado));
+      case 'listarUsuarios': return json({ ok: true, usuarios: listarUsuarios() });
+      case 'crearUsuario': return json(crearUsuario(req.usuario, req.clave));
+      case 'claveUsuario': return json(cambiarClaveUsuario(req.usuario, req.clave));
+      case 'activarUsuario': return json(activarUsuario(req.usuario, req.activo));
+      case 'eliminarUsuario': return json(eliminarUsuario(req.usuario));
     }
     return json({ ok: false, error: 'Acción desconocida' });
   } catch (err) {
@@ -78,17 +87,129 @@ function login(req) {
   if (ADMIN_CLAVE === 'CAMBIA-ESTA-CLAVE') {
     return { ok: false, error: 'Primero cambia ADMIN_CLAVE en el código de Apps Script y vuelve a implementar.' };
   }
-  if (req.usuario !== ADMIN_USUARIO || req.clave !== ADMIN_CLAVE) {
+  const usuario = String(req.usuario || '').trim();
+  let info = null;
+  if (usuario === ADMIN_USUARIO && req.clave === ADMIN_CLAVE) {
+    info = { usuario: ADMIN_USUARIO, rol: 'dueno' };
+  } else {
+    const u = buscarUsuario(usuario.toLowerCase());
+    if (u && u.datos.activo !== 'NO' && hashClave(req.clave, u.datos.sal) === u.datos.clave) {
+      info = { usuario: u.datos.usuario, rol: 'ayudante' };
+    }
+  }
+  if (!info) {
     Utilities.sleep(1500);
     return { ok: false, error: 'Usuario o clave incorrectos' };
   }
   const token = Utilities.getUuid();
-  CacheService.getScriptCache().put('sesion_' + token, '1', HORAS_SESION * 3600);
-  return { ok: true, token: token };
+  CacheService.getScriptCache().put('sesion_' + token, JSON.stringify(info), HORAS_SESION * 3600);
+  return { ok: true, token: token, usuario: info.usuario, rol: info.rol };
 }
 
-function sesionValida(token) {
-  return !!token && CacheService.getScriptCache().get('sesion_' + token) === '1';
+/* Devuelve {usuario, rol} o null. Un ayudante pausado o eliminado pierde el acceso al instante. */
+function sesion(token) {
+  if (!token) return null;
+  const valor = CacheService.getScriptCache().get('sesion_' + token);
+  if (!valor || valor === '1') return null;
+  let info;
+  try { info = JSON.parse(valor); } catch (x) { return null; }
+  if (info.rol === 'ayudante') {
+    const u = buscarUsuario(info.usuario);
+    if (!u || u.datos.activo === 'NO') return null;
+  }
+  return info;
+}
+
+/* ---------- Administradores (ayudantes) ---------- */
+const SOLO_DUENO = ['eliminar', 'listarUsuarios', 'crearUsuario', 'claveUsuario', 'activarUsuario', 'eliminarUsuario'];
+const HOJA_USUARIOS = 'Usuarios';
+
+function hojaUsuarios() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  let sh = ss.getSheetByName(HOJA_USUARIOS);
+  if (!sh) {
+    sh = ss.insertSheet(HOJA_USUARIOS, ss.getNumSheets());
+    sh.appendRow(['usuario', 'clave', 'sal', 'rol', 'activo', 'creado']);
+    sh.hideSheet();
+  }
+  return sh;
+}
+
+function hashClave(clave, sal) {
+  const bytes = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, sal + '|' + String(clave || ''), Utilities.Charset.UTF_8);
+  return Utilities.base64Encode(bytes);
+}
+
+function buscarUsuario(usuario) {
+  const sh = hojaUsuarios();
+  const datos = sh.getDataRange().getValues();
+  const cols = datos[0].map(function (h) { return String(h).trim().toLowerCase(); });
+  for (let i = 1; i < datos.length; i++) {
+    if (String(datos[i][0]).toLowerCase() === String(usuario).toLowerCase()) {
+      const o = {};
+      cols.forEach(function (k, j) { o[k] = datos[i][j]; });
+      return { fila: i + 1, cols: cols, datos: o, hoja: sh };
+    }
+  }
+  return null;
+}
+
+function validarClave(clave) {
+  return String(clave || '').length >= 6 ? '' : 'La clave debe tener al menos 6 caracteres';
+}
+
+function crearUsuario(usuario, clave) {
+  usuario = String(usuario || '').trim().toLowerCase();
+  if (!/^[a-z0-9._-]{3,30}$/.test(usuario)) return { ok: false, error: 'El usuario debe tener de 3 a 30 letras o números, sin espacios ni tildes' };
+  const errorClave = validarClave(clave);
+  if (errorClave) return { ok: false, error: errorClave };
+  if (usuario === String(ADMIN_USUARIO).toLowerCase()) return { ok: false, error: 'Ese usuario ya es el tuyo (dueño)' };
+  const lock = LockService.getScriptLock();
+  lock.waitLock(10000);
+  try {
+    if (buscarUsuario(usuario)) return { ok: false, error: 'Ya existe un administrador con ese usuario' };
+    const sal = Utilities.getUuid();
+    hojaUsuarios().appendRow([usuario, hashClave(clave, sal), sal, 'ayudante', 'SI',
+      Utilities.formatDate(new Date(), 'America/Lima', 'yyyy-MM-dd HH:mm')]);
+    return { ok: true };
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+function listarUsuarios() {
+  const datos = hojaUsuarios().getDataRange().getValues();
+  datos.shift();
+  const ayudantes = datos.filter(function (r) { return r[0] !== ''; }).map(function (r) {
+    return { usuario: r[0], rol: 'ayudante', activo: r[4] !== 'NO',
+      creado: r[5] instanceof Date ? Utilities.formatDate(r[5], 'America/Lima', 'yyyy-MM-dd HH:mm') : r[5] };
+  });
+  return [{ usuario: ADMIN_USUARIO, rol: 'dueno', activo: true, creado: '' }].concat(ayudantes);
+}
+
+function cambiarClaveUsuario(usuario, clave) {
+  const errorClave = validarClave(clave);
+  if (errorClave) return { ok: false, error: errorClave };
+  const u = buscarUsuario(usuario);
+  if (!u) return { ok: false, error: 'No se encontró ese administrador' };
+  const sal = Utilities.getUuid();
+  u.hoja.getRange(u.fila, u.cols.indexOf('clave') + 1).setValue(hashClave(clave, sal));
+  u.hoja.getRange(u.fila, u.cols.indexOf('sal') + 1).setValue(sal);
+  return { ok: true };
+}
+
+function activarUsuario(usuario, activo) {
+  const u = buscarUsuario(usuario);
+  if (!u) return { ok: false, error: 'No se encontró ese administrador' };
+  u.hoja.getRange(u.fila, u.cols.indexOf('activo') + 1).setValue(activo ? 'SI' : 'NO');
+  return { ok: true };
+}
+
+function eliminarUsuario(usuario) {
+  const u = buscarUsuario(usuario);
+  if (!u) return { ok: false, error: 'No se encontró ese administrador' };
+  u.hoja.deleteRow(u.fila);
+  return { ok: true };
 }
 
 /* ---------- Hoja ---------- */
