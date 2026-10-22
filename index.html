@@ -658,7 +658,7 @@ $('#orderForm').addEventListener('submit',async e=>{
 /* WhatsApp: pon aquí tu número con código de país, sin + ni espacios (ej. 51987654321) */
 const WA_NUMBER='51964467133';
 /* Apps Script que registra pedidos y crea el pago en Mercado Pago (la misma URL del panel) */
-const API_URL='https://script.google.com/macros/s/AKfycbxjj1lAWATEOgnFnpjXHcXnddDkzgdloxoWqqR9ujuVHY7z-KNt20q3_WIMSRGm0UCGuQ/exec';
+const API_URL='https://script.google.com/macros/s/AKfycbyBX9vuQK642pQ_b3pJjTq3C1gUmWfdRshKRGEV6AeCF4F_-MWKKl_BxB32NThffmM0/exec';
 const WA_TEXT='Hola Mas Novedosos TEC, quiero información sobre un producto.';
 $('#waLink').href=waUrl(WA_TEXT);
 function waUrl(text){return `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(text)}`}
