@@ -263,6 +263,45 @@ footer .wrap{padding-block:28px;display:flex;justify-content:space-between;gap:1
 .card .add[disabled],.btn[disabled]{opacity:.55;cursor:not-allowed}
 @media (max-width:720px){.modal{grid-template-columns:1fr}.modal .tile{min-height:200px}}
 
+/* product gallery + video */
+.vchip{position:absolute;z-index:1;right:10px;bottom:10px;display:inline-flex;align-items:center;gap:5px;background:rgba(7,11,20,.8);color:#fff;font-size:11px;font-weight:800;border-radius:999px;padding:4px 10px 4px 5px}
+.vchip i,.vbtn i,.vlink i{display:grid;place-items:center;border-radius:50%;background:#fff;color:#2F3BFF;font-style:normal}
+.vchip i{width:16px;height:16px;font-size:8px}
+.gallery{display:grid;gap:10px;align-content:start;min-width:0}
+.modal .gallery .stage{min-height:0;aspect-ratio:1/1;overflow:hidden}
+.stage.playing,.lb-media.playing{background:#000}
+.stage iframe,.stage video,.lb-media iframe,.lb-media video{position:absolute;inset:0;width:100%;height:100%;border:0;background:#000}
+.modal .stage img{object-fit:contain;background:#fff}
+.stage .zoom{position:absolute;inset:0;border:0;padding:0;background:none;cursor:zoom-in}
+.vbtn{position:absolute;z-index:2;left:12px;bottom:12px;display:inline-flex;align-items:center;gap:8px;border:0;border-radius:999px;padding:9px 16px 9px 9px;background:var(--grad);color:#fff;font:800 14px var(--f-body);box-shadow:0 8px 22px rgba(47,59,255,.4);cursor:pointer}
+.vbtn i{width:24px;height:24px;font-size:10px}
+.vbtn.alt{top:12px;bottom:auto;background:rgba(7,11,20,.8);box-shadow:none}
+.vbtn.alt i{color:#0B1220}
+.gnav{position:absolute;z-index:2;top:50%;transform:translateY(-50%);width:38px;height:38px;border-radius:50%;border:0;background:rgba(255,255,255,.92);color:#0B1220;font-size:22px;line-height:1;box-shadow:0 4px 14px rgba(0,0,0,.18);cursor:pointer}
+.gnav.prev{left:10px}.gnav.next{right:10px}
+.gcount{position:absolute;z-index:2;right:12px;bottom:14px;background:rgba(7,11,20,.72);color:#fff;font-size:12px;font-weight:700;border-radius:999px;padding:4px 10px}
+.thumbs{display:flex;gap:8px;padding:0 12px 12px;overflow-x:auto}
+.thumbs button{position:relative;flex:none;width:62px;height:62px;border-radius:10px;overflow:hidden;border:2px solid var(--line);padding:0;background:var(--bg);cursor:pointer}
+.thumbs button[aria-current="true"]{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.thumbs img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.modal .thumbs .tile{min-height:0}
+.thumbs .tile svg{width:60%}
+.thumbs .vt{background:linear-gradient(135deg,#1B2A6B,#0B1230)}
+.thumbs .vt::before{content:'▶';position:absolute;z-index:1;inset:0;display:grid;place-items:center;padding-bottom:12px;font-size:16px;color:#fff;background:rgba(7,11,20,.35)}
+.thumbs .vt span{position:absolute;z-index:1;left:0;right:0;bottom:4px;text-align:center;color:#fff;font-size:10px;font-weight:800;letter-spacing:.04em;text-transform:uppercase}
+.vlink{position:relative;z-index:1;display:inline-flex;align-items:center;gap:10px;background:var(--grad);color:#fff;font-weight:800;border-radius:999px;padding:12px 20px 12px 12px;text-decoration:none}
+.vlink i{width:28px;height:28px;font-size:11px}
+.lb{position:fixed;inset:0;z-index:70;background:rgba(5,8,16,.97);display:grid;grid-template-rows:auto minmax(0,1fr) auto;align-items:center;color:#fff}
+.lb-top{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 16px}
+.lb-top b{font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.lb-x{flex:none;width:42px;height:42px;border-radius:50%;border:0;background:rgba(255,255,255,.14);color:#fff;font-size:18px;cursor:pointer}
+.lb-media{position:relative;display:grid;place-items:center;justify-self:center;width:min(calc(100% - 32px),calc(100dvh - 210px));aspect-ratio:1/1;border-radius:14px;overflow:hidden}
+.lb-media.vert{aspect-ratio:9/16;width:min(calc(100% - 32px),calc((100dvh - 210px) * .5625))}
+.lb-media img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
+.lb-media svg{width:50%;color:#A9B7FF}
+.lb .thumbs{justify-content:center;padding:14px 16px max(18px,env(safe-area-inset-bottom))}
+.lb .thumbs button{border-color:rgba(255,255,255,.18)}
+
 .checkout form{display:grid;gap:12px}
 .field{display:grid;gap:4px}
 .field label{font-size:13px;font-weight:700}
@@ -422,6 +461,7 @@ footer .wrap{padding-block:28px;display:flex;justify-content:space-between;gap:1
 </aside>
 
 <div class="modal" id="modal" hidden role="dialog" aria-modal="true" aria-labelledby="m-title"></div>
+<div class="lb" id="lb" hidden role="dialog" aria-modal="true" aria-label="Fotos y video del producto"></div>
 <div class="toast" id="toast" hidden></div>
 
 <script>
@@ -484,7 +524,7 @@ function renderGrid(){
   const list=P.filter(p=>(cat==='todos'||p.cat===cat)&&(!q||p.name.toLowerCase().includes(q)));
   $('#grid').innerHTML=list.length?list.map(p=>`
     <article class="card${soldOut(p)?' soldout':''}">
-      <button class="tile" style="--h:${p.h}" data-view="${p.id}" aria-label="Ver ${p.name}">${soldOut(p)?'<span class="badge alt">Agotado</span>':p.tag?`<span class="badge${p.tag==='Nuevo'?' alt':''}">⚡ ${p.tag}</span>`:''}${art(p)}</button>
+      <button class="tile" style="--h:${p.h}" data-view="${p.id}" aria-label="Ver ${p.name}">${soldOut(p)?'<span class="badge alt">Agotado</span>':p.tag?`<span class="badge${p.tag==='Nuevo'?' alt':''}">⚡ ${p.tag}</span>`:''}${art(p)}${p.video?'<span class="vchip"><i>▶</i>Video</span>':''}</button>
       <div class="body">
         <span class="stars">${stars(p.r)} ${p.r} · ${p.n} reseñas</span>
         <h3>${p.name}</h3>
@@ -607,21 +647,87 @@ function tick(){
 /* overlays */
 let openEl=null;
 function show(el){closeAll();openEl=el;el.hidden=false;$('#scrim').hidden=false;document.body.style.overflow='hidden';const f=el.querySelector('button,input');f&&f.focus()}
-function closeAll(){[$('#cart'),$('#checkout'),$('#modal')].forEach(e=>e.hidden=true);$('#scrim').hidden=true;document.body.style.overflow='';openEl=null}
+function closeAll(){[$('#cart'),$('#checkout'),$('#modal'),$('#lb')].forEach(e=>e.hidden=true);$('#lb').innerHTML='';$('#modal').querySelectorAll('iframe,video').forEach(x=>x.remove());$('#scrim').hidden=true;document.body.style.overflow='';openEl=null}
+
+/* Product photos + video. Video links: YouTube (incl. Shorts), TikTok, Google Drive or a direct .mp4 */
+function parseVideo(u){
+  u=String(u||'').trim(); if(!/^https:\/\//i.test(u)) return null;
+  let m;
+  if(m=u.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?(?:.*&)?v=|shorts\/|embed\/|live\/))([\w-]{11})/i))
+    return {kind:'yt',id:m[1],vertical:/\/shorts\//i.test(u),thumb:`https://i.ytimg.com/vi/${m[1]}/hqdefault.jpg`};
+  if(m=u.match(/tiktok\.com\/.*\/video\/(\d+)/i)) return {kind:'tt',id:m[1],vertical:true};
+  if(m=u.match(/drive\.google\.com\/(?:file\/d\/|open\?id=|uc\?(?:.*&)?id=)([\w-]{20,})/i))
+    return {kind:'drive',id:m[1],thumb:`https://drive.google.com/thumbnail?id=${m[1]}&sz=w400`};
+  if(/\.(mp4|webm|mov)(\?|$)/i.test(u)) return {kind:'file',src:esc(u)};
+  return {kind:'link',src:esc(u)};
+}
+function videoEmbed(v){
+  const frame=src=>`<iframe src="${src}" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin" title="Video del producto"></iframe>`;
+  if(v.kind==='yt') return frame(`https://www.youtube-nocookie.com/embed/${v.id}?autoplay=1&rel=0&playsinline=1`);
+  if(v.kind==='tt') return frame(`https://www.tiktok.com/player/v1/${v.id}?autoplay=1&rel=0`);
+  if(v.kind==='drive') return frame(`https://drive.google.com/file/d/${v.id}/preview`);
+  if(v.kind==='file') return `<video src="${v.src}" controls autoplay playsinline></video>`;
+  return `<a class="vlink" href="${v.src}" target="_blank" rel="noopener"><i>▶</i>Abrir el video</a>`;
+}
+const imgsOf=p=>p.imgs||(p.img?[p.img]:[]);
+function gallery(p){
+  const imgs=imgsOf(p);
+  const media=[...(imgs.length?imgs.map(src=>({t:'img',src})):[{t:'art'}]),...(p.video?[{t:'video'}]:[])];
+  const vi=p.video?media.length-1:-1, photos=media.length-(p.video?1:0);
+  const body=(x,lb)=>x.t==='img'?`<img src="${x.src}" alt="${p.name}">`:x.t==='art'?art(p):videoEmbed(p.video);
+  const vbtn=i=>vi<0?'':i===vi
+    ?`<button type="button" class="vbtn alt" data-gi="0"><i>◀</i>${photos>1?'Ver fotos':'Ver foto'}</button>`
+    :`<button type="button" class="vbtn" data-gi="${vi}"><i>▶</i>Ver video</button>`;
+  const stage=(i,lb)=>{const x=media[i];return `
+    ${!lb&&x.t!=='video'&&p.tag?`<span class="badge">⚡ ${p.tag}</span>`:''}
+    ${body(x,lb)}
+    ${!lb&&x.t==='img'?'<button type="button" class="zoom" data-zoom aria-label="Ver fotos en grande"></button>':''}
+    ${photos>1&&x.t!=='video'?`<button type="button" class="gnav prev" data-gstep="-1" aria-label="Foto anterior">‹</button><button type="button" class="gnav next" data-gstep="1" aria-label="Foto siguiente">›</button><span class="gcount">${i+1} / ${photos}</span>`:''}
+    ${vbtn(i)}`};
+  const thumbs=i=>media.length<2?'':`<div class="thumbs">${media.map((x,k)=>`<button type="button" data-gi="${k}" aria-current="${k===i}" aria-label="${x.t==='video'?'Ver video':'Foto '+(k+1)}"${x.t==='video'?' class="vt"':x.t==='art'?` class="tile" style="--h:${p.h}"`:''}>${
+    x.t==='img'?`<img src="${x.src}" alt="" loading="lazy">`:x.t==='art'?art(p):(p.video.thumb?`<img src="${p.video.thumb}" alt="" onerror="this.remove()">`:'')+'<span>Video</span>'}</button>`).join('')}</div>`;
+  const cls=i=>media[i].t==='video'?' playing'+(p.video.vertical?' vert':''):'';
+  return {media,photos,stage,thumbs,cls};
+}
+function openViewer(p,G,start,onClose){
+  const lb=$('#lb'); let i=start, x0=null;
+  const draw=()=>{lb.innerHTML=`
+    <div class="lb-top"><b>${p.name}</b><button type="button" class="lb-x" data-lbx aria-label="Cerrar">✕</button></div>
+    <div class="lb-media${G.cls(i)}">${G.stage(i,true)}</div>
+    ${G.thumbs(i)}`};
+  const go=k=>{i=(k+G.media.length)%G.media.length;draw()};
+  const step=d=>go(G.media[i].t==='video'?0:((i+d+G.photos)%G.photos));
+  const close=()=>{lb.hidden=true;lb.innerHTML='';document.removeEventListener('keydown',key,true);onClose(i)};
+  const key=e=>{
+    if(e.key==='Escape'){e.stopPropagation();close()}
+    if(e.key==='ArrowRight') step(1);
+    if(e.key==='ArrowLeft') step(-1);
+  };
+  lb.onclick=e=>{
+    const g=e.target.closest('[data-gi]'), s=e.target.closest('[data-gstep]');
+    if(g) go(+g.dataset.gi); else if(s) step(+s.dataset.gstep);
+    else if(e.target.closest('[data-lbx]')||e.target===lb) close();
+  };
+  lb.ontouchstart=e=>{x0=e.touches[0].clientX};
+  lb.ontouchend=e=>{if(x0==null)return;const dx=e.changedTouches[0].clientX-x0;x0=null;if(Math.abs(dx)>40&&G.media[i].t!=='video') step(dx<0?1:-1)};
+  document.addEventListener('keydown',key,true);
+  draw(); lb.hidden=false; lb.querySelector('.lb-x').focus();
+}
 
 function openProduct(id){
   const p=byId(id); if(!p) return;
-  let v=p.colors[0], q=1;
-  const m=$('#modal');
+  let v=p.colors[0], q=1, gi=0, x0=null;
+  const m=$('#modal'), G=gallery(p);
+  m.innerHTML='<div class="gallery" id="gal"></div><div class="info" id="pinfo"></div>';
+  const drawGal=()=>{$('#gal').innerHTML=`<div class="tile stage${G.cls(gi)}" style="--h:${p.h}">${G.stage(gi)}</div>${G.thumbs(gi)}`};
+  const stepGal=d=>{gi=G.media[gi].t==='video'?0:(gi+d+G.photos)%G.photos;drawGal()};
   const draw=()=>{
     const room=maxQty(p)-inCart(p.id);
     q=Math.max(1,Math.min(q,room));
     const addBtn=soldOut(p)?'<button class="btn primary" style="flex:1" disabled>Agotado</button>'
       :room<=0?'<button class="btn primary" style="flex:1" disabled>Ya están todas en tu carrito</button>'
       :`<button class="btn primary" style="flex:1" data-addm>Agregar · ${soles(p.price*q)}</button>`;
-    m.innerHTML=`
-    <div class="tile" style="--h:${p.h}">${p.tag?`<span class="badge">⚡ ${p.tag}</span>`:''}${art(p)}</div>
-    <div class="info">
+    $('#pinfo').innerHTML=`
       <button class="x" data-close aria-label="Cerrar">✕</button>
       <span class="stars">${stars(p.r)} ${p.r} · ${p.n} reseñas</span>
       <h2 id="m-title">${p.name}</h2>
@@ -634,10 +740,16 @@ function openProduct(id){
         ${addBtn}
       </div>
       <a class="btn wa-order block" href="${waUrl(soldOut(p)?`Hola Más Novedosos TEC, ¿cuándo vuelve a llegar ${p.name}?`:waProduct(p,v,q))}" target="_blank" rel="noopener">${WA_ICON} ${soldOut(p)?'Avísame cuando llegue':'Pedir por WhatsApp'}</a>
-      ${stockHtml(p,true)}
-    </div>`;};
-  draw();
+      ${stockHtml(p,true)}`;};
+  drawGal(); draw();
+  const gal=$('#gal');
+  gal.ontouchstart=e=>{x0=e.touches[0].clientX};
+  gal.ontouchend=e=>{if(x0==null)return;const dx=e.changedTouches[0].clientX-x0;x0=null;if(Math.abs(dx)>40&&G.media[gi].t!=='video') stepGal(dx<0?1:-1)};
   m.onclick=e=>{
+    const g=e.target.closest('[data-gi]'), s=e.target.closest('[data-gstep]');
+    if(g){gi=+g.dataset.gi;drawGal()}
+    if(s) stepGal(+s.dataset.gstep);
+    if(e.target.closest('[data-zoom]')) openViewer(p,G,gi,i=>{if(G.media[i].t!=='video'){gi=i;drawGal()}});
     const o=e.target.closest('[data-v]'), d=e.target.closest('[data-q]');
     if(o){v=o.dataset.v;draw()}
     if(d){
@@ -871,6 +983,7 @@ async function loadSheet(){
       return {id,name:esc(o.nombre),cat:esc((o.categoria||'otros').toLowerCase()),price,was:Math.max(num(o.precio_antes),price),
         r:num(o.estrellas)||5,n:Math.round(num(o.resenas)),h:hue(id),tag:esc(o.etiqueta),colors:opts.length?opts:['Única'],
         desc:esc(o.descripcion),specs:list(o.caracteristicas),img:/^https:\/\//i.test(o.foto)?esc(o.foto):'',icon:o.icono||id,
+        imgs:[esc(o.foto),...list(o.fotos)].filter(u=>/^https:\/\//i.test(u)),video:parseVideo(o.video),
         feat:/^s[ií]$/i.test(o.destacado),
         stock:String(o.stock??'').trim()===''?null:Math.max(0,Math.round(num(o.stock)))};
     });
