@@ -84,13 +84,55 @@ a.btn{text-decoration:none}
 .btn:hover{filter:brightness(1.07)}
 .pay{display:flex;gap:8px;flex-wrap:wrap;margin-top:24px}
 .pay span{font-size:12px;font-weight:700;border:1px solid var(--line);border-radius:6px;padding:4px 8px;color:var(--muted);background:var(--surface)}
-.deal{background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:20px;box-shadow:var(--shadow);display:grid;gap:14px}
-.deal .tile{aspect-ratio:16/10;border-radius:14px}
-.deal .tile svg{width:38%}
-.deal-top{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
 .timer{font-family:var(--f-mono);font-weight:600;color:var(--hot);font-size:15px}
-.deal h3{font-size:20px}
-@media (max-width:860px){.hero .wrap{grid-template-columns:1fr;padding-block:32px}}
+
+/* hero carousel: a fixed dark brand stage on purpose, it reads the same in light and dark mode */
+.hero .wrap{display:block;padding-block:20px 28px}
+.slider{position:relative;border-radius:24px;overflow:hidden;isolation:isolate;color:#EEF2F8;
+  background:radial-gradient(120% 130% at 82% 18%,#1B2F86 0%,#0C1438 42%,#070B14 100%);box-shadow:0 18px 50px rgba(7,11,20,.28)}
+.slider::before{content:"";position:absolute;inset:0;z-index:-1;
+  background-image:linear-gradient(rgba(120,160,255,.07) 1px,transparent 1px),linear-gradient(90deg,rgba(120,160,255,.07) 1px,transparent 1px);background-size:32px 32px;
+  -webkit-mask-image:radial-gradient(60% 80% at 75% 40%,#000,transparent);mask-image:radial-gradient(60% 80% at 75% 40%,#000,transparent)}
+.slides{display:grid}
+.slide{grid-area:1/1;display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr);gap:24px;align-items:center;padding:44px 64px 66px;opacity:0;visibility:hidden;transition:opacity .6s ease,visibility .6s}
+.slide.on{opacity:1;visibility:visible}
+.slide .copy{min-width:0;transform:translateY(14px);transition:transform .7s cubic-bezier(.2,.7,.2,1)}
+.slide.on .copy{transform:none}
+.slide .eyebrow{font-size:12px;letter-spacing:.12em;text-transform:uppercase;font-weight:800;color:#7DE3F4}
+.slide h1,.slide h2{font-family:var(--f-display);font-size:clamp(28px,4.4vw,50px);font-weight:800;letter-spacing:-.03em;line-height:1.08;margin:10px 0 0;color:#FFFFFF;text-wrap:balance}
+.slide h1 span,.slide h2 span{background:linear-gradient(115deg,#D16BFF 0%,#7C86FF 50%,#4FE0F5 100%);-webkit-background-clip:text;background-clip:text;color:transparent}
+.slide p{color:#B9C6E4;font-size:16px;max-width:50ch;margin:14px 0 22px}
+.slide p b{color:#FFFFFF}
+.slide .btn.ghost{color:#FFFFFF;border-color:rgba(255,255,255,.28)}
+.slide .timer{color:#FF8FA0;display:inline-block;margin-top:2px}
+.slide .was{color:#8E9BBB;text-decoration:line-through;font-family:var(--f-mono);margin-left:6px}
+.slide .chips2{display:flex;gap:8px;flex-wrap:wrap;margin:-6px 0 20px}
+.slide .chips2 span{border:1px solid rgba(255,255,255,.22);color:#DCE4F7;border-radius:8px;padding:6px 10px;font-size:13px;font-weight:700}
+.visual{position:relative;display:grid;place-items:center;width:100%;max-width:330px;justify-self:center}
+.visual .ring{position:absolute;inset:4%;border-radius:50%;background:conic-gradient(from 200deg,#B620F5,#2F3BFF,#14D2EE,#B620F5);filter:blur(30px);opacity:.5}
+.visual .disc{position:relative;width:86%;aspect-ratio:1;border-radius:50%;overflow:hidden;display:grid;place-items:center;color:#A9B7FF;
+  background:radial-gradient(circle at 35% 30%,#22347E,#0B1230 72%);border:1px solid rgba(124,134,255,.38)}
+.visual .disc>img:not(.logo-big){width:100%;height:100%;object-fit:cover}
+.visual .disc>svg{width:50%}
+.visual .disc .logo-big{width:40%;height:auto;filter:drop-shadow(0 0 18px rgba(47,59,255,.7))}
+.slide.on .disc>*{animation:kb 4.4s ease-out forwards}
+@keyframes kb{from{transform:scale(1)}to{transform:scale(1.08)}}
+.visual .pricetag{position:absolute;right:2%;bottom:10%;background:var(--grad);color:#FFFFFF;font-family:var(--f-mono);font-weight:700;font-size:16px;padding:8px 12px;border-radius:12px;box-shadow:0 8px 22px rgba(47,59,255,.45)}
+.nav{position:absolute;top:50%;transform:translateY(-50%);z-index:2;width:42px;height:42px;border-radius:50%;border:1px solid rgba(255,255,255,.24);background:rgba(7,11,20,.45);color:#FFFFFF;font-size:24px;line-height:1;display:grid;place-items:center;backdrop-filter:blur(6px)}
+.nav:hover{background:rgba(47,59,255,.55)}
+.nav.prev{left:12px}.nav.next{right:12px}
+.dots{position:absolute;left:64px;bottom:26px;z-index:2;display:flex;gap:8px}
+.dots button{width:9px;height:9px;border-radius:999px;border:0;padding:0;background:rgba(255,255,255,.35);transition:width .3s,background .3s}
+.dots button[aria-selected="true"]{width:28px;background:#FFFFFF}
+.slider .progress{position:absolute;left:0;right:0;bottom:0;height:3px;background:rgba(255,255,255,.08)}
+.slider .progress i{display:block;height:100%;width:0;background:var(--grad)}
+@media (max-width:760px){
+  .slide{grid-template-columns:1fr;gap:6px;padding:22px 20px 58px;align-content:start}
+  .slide .visual{order:-1;max-width:190px}
+  .slide p{font-size:15px;margin:10px 0 18px}
+  .nav{display:none}
+  .dots{left:20px;bottom:22px}
+}
 
 /* trust strip */
 .trust{border-block:1px solid var(--line);background:var(--surface)}
@@ -268,18 +310,24 @@ footer .wrap{padding-block:28px;display:flex;justify-content:space-between;gap:1
   </button>
 </div></header>
 
-<section class="hero"><div class="wrap">
-  <div>
-    <p class="label">Novedades de la semana</p>
-    <h1>La tecnología que <span>todos quieren</span>, con envío a todo el Perú</h1>
-    <p class="lead">Gadgets novedosos para tu casa, tu celular y tu auto. Precios en soles, pago seguro y seguimiento de tu pedido por WhatsApp.</p>
-    <div class="cta">
-      <a class="btn primary" href="#catalogo">Ver productos</a>
-      <button class="btn ghost" id="heroDeal">Oferta del día</button>
+<section class="hero" aria-label="Destacados"><div class="wrap">
+  <div class="slider" id="slider" aria-roledescription="carrusel">
+    <div class="slides" id="slides">
+      <div class="slide on" role="group" aria-roledescription="diapositiva" aria-label="1 de 1">
+        <div class="copy">
+          <span class="eyebrow">Novedades de la semana</span>
+          <h1>La tecnología que <span>todos quieren</span>, con envío a todo el Perú</h1>
+          <p>Gadgets novedosos para tu casa, tu celular y tu auto. Precios en soles, pago seguro y seguimiento de tu pedido por WhatsApp.</p>
+          <div class="cta"><a class="btn primary" href="#catalogo">Ver productos</a></div>
+        </div>
+        <div class="visual"><div class="ring"></div><div class="disc"><img class="logo-big" src="favicon.svg" alt=""></div></div>
+      </div>
     </div>
-    <div class="pay"><span>Yape</span><span>Plin</span><span>Visa</span><span>Mastercard</span><span>Contraentrega Lima</span></div>
+    <button class="nav prev" id="prevSlide" aria-label="Diapositiva anterior">‹</button>
+    <button class="nav next" id="nextSlide" aria-label="Diapositiva siguiente">›</button>
+    <div class="dots" id="dots"></div>
+    <div class="progress"><i id="slideBar"></i></div>
   </div>
-  <div class="deal" id="dealCard"></div>
 </div></section>
 
 <div class="trust"><div class="wrap">
@@ -447,16 +495,91 @@ function renderGrid(){
       </div>
     </article>`).join(''):`<p class="empty">No encontramos productos para “${query}”. Prueba con otra palabra.</p>`;
 }
+/* Hero carousel: brand, deal of the day, two categories, payment & delivery. Changes every 4 s. */
+const HERO_MS=4000;
+const CAT_COPY={
+  hogar:{t:'Haz tu casa <span>más inteligente</span>',d:'Luces, cámaras y gadgets que hacen tu día más fácil.'},
+  audio:{t:'Tu música, <span>sin cables</span>',d:'Audífonos y parlantes con buen sonido y batería para todo el día.'},
+  celular:{t:'Carga y conecta <span>en segundos</span>',d:'Cargadores, power banks y accesorios para tu celular.'},
+  gadgets:{t:'Gadgets que <span>sorprenden</span>',d:'Lo más nuevo en tecnología para regalar o darte un gusto.'},
+  auto:{t:'Tu auto, <span>más equipado</span>',d:'Soportes, aspiradoras y accesorios para cada viaje.'}
+};
+const visual=(inner,tag='')=>`<div class="visual"><div class="ring"></div><div class="disc">${inner}</div>${tag}</div>`;
+function heroSlides(){
+  const s=[];
+  s.push(`<div class="copy"><span class="eyebrow">Novedades de la semana</span>
+    <h1>La tecnología que <span>todos quieren</span>, con envío a todo el Perú</h1>
+    <p>Gadgets novedosos para tu casa, tu celular y tu auto. Precios en soles, pago seguro y seguimiento de tu pedido por WhatsApp.</p>
+    <div class="cta"><a class="btn primary" href="#catalogo">Ver productos</a></div></div>
+    ${visual('<img class="logo-big" src="favicon.svg" alt="">')}`);
+  const d=byId(DEAL);
+  if(d) s.push(`<div class="copy"><span class="eyebrow">⚡ Oferta del día${off(d)>0?` · -${off(d)}%`:''}</span>
+    <h2>${d.name}</h2>
+    <p><b class="mono">${soles(d.price)}</b>${d.was>d.price?`<span class="was">${soles(d.was)}</span>`:''}<br><span class="timer" id="timer"></span></p>
+    <div class="cta"><button class="btn primary" data-view="${d.id}">${soldOut(d)?'Ver producto':'Lo quiero'}</button><a class="btn ghost" href="#catalogo">Ver todo</a></div></div>
+    ${visual(art(d),`<span class="pricetag">${soles(d.price)}</span>`)}`);
+  const cats=CATS.map(c=>c[0]).filter(c=>c!=='todos');
+  const picks=[];
+  for(const c of cats){
+    const items=P.filter(p=>p.cat===c&&!soldOut(p)&&p.id!==DEAL);
+    if(!items.length) continue;
+    picks.push({c,p:items.find(p=>p.img)||items[0],min:Math.min(...items.map(p=>p.price))});
+    if(picks.length===2) break;
+  }
+  picks.forEach(({c,p,min})=>{
+    const copy=CAT_COPY[c]||{t:`Lo nuevo en <span>${(CATS.find(x=>x[0]===c)||[c,c])[1]}</span>`,d:'Descubre los productos más novedosos.'};
+    const label=(CATS.find(x=>x[0]===c)||[c,c])[1];
+    s.push(`<div class="copy"><span class="eyebrow">${label}</span>
+      <h2>${copy.t}</h2>
+      <p>${copy.d} Desde <b class="mono">${soles(min)}</b>.</p>
+      <div class="cta"><button class="btn primary" data-catgo="${c}">Ver ${label.toLowerCase()}</button><button class="btn ghost" data-view="${p.id}">Ver producto</button></div></div>
+      ${visual(art(p),`<span class="pricetag">${soles(p.price)}</span>`)}`);
+  });
+  s.push(`<div class="copy"><span class="eyebrow">Compra segura</span>
+    <h2>Paga <span>como quieras</span></h2>
+    <p>Tarjeta, Yape, Plin o contraentrega en Lima. Envío a todo el Perú y seguimiento de tu pedido por WhatsApp.</p>
+    <div class="chips2"><span>Visa</span><span>Mastercard</span><span>Yape</span><span>Plin</span><span>Contraentrega Lima</span></div>
+    <div class="cta"><a class="btn primary" href="#catalogo">Comprar ahora</a></div></div>
+    ${visual('<svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 18h34v26H4zM38 26h12l10 10v8H38"/><circle cx="16" cy="48" r="5"/><circle cx="48" cy="48" r="5"/><path d="M14 30l5 5 9-9"/></svg>')}`);
+  return s;
+}
+let hi=0, hElapsed=0, hLast=0, hPaused=false;
+const hReduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
 function renderDeal(){
-  const p=byId(DEAL);
-  if(!p){$('#dealCard').innerHTML='<div class="empty loading"><img src="favicon.svg" alt="" width="30" height="48"><span>Cargando la oferta del día…</span></div>';return}
-  $('#dealCard').innerHTML=`
-    <div class="deal-top"><span class="label">⚡ Oferta del día · -${off(p)}%</span><span class="timer" id="timer">00:00:00</span></div>
-    <div class="tile" style="--h:${p.h}">${art(p)}</div>
-    <h3>${p.name}</h3>
-    <div class="price"><span class="now">${soles(p.price)}</span>${p.was>p.price?`<span class="was">${soles(p.was)}</span>`:""}<span class="stars">${stars(p.r)} ${p.n} reseñas</span></div>
-    ${stockHtml(p)}
-    <button class="btn primary block" data-view="${p.id}">${soldOut(p)?'Ver producto':'Lo quiero'}</button>`;
+  const s=heroSlides(); if(hi>=s.length) hi=0;
+  $('#slides').innerHTML=s.map((x,i)=>`<div class="slide${i===hi?' on':''}" role="group" aria-roledescription="diapositiva" aria-label="${i+1} de ${s.length}"${i===hi?'':' aria-hidden="true"'}>${x}</div>`).join('');
+  $('#dots').innerHTML=s.map((_,i)=>`<button aria-label="Ir a la diapositiva ${i+1}" aria-selected="${i===hi}" data-dot="${i}"></button>`).join('');
+  hElapsed=0; tick();
+}
+function goSlide(i){
+  const slides=[...$('#slides').children]; if(!slides.length) return;
+  hi=(i+slides.length)%slides.length;
+  slides.forEach((el,k)=>{el.classList.toggle('on',k===hi); if(k===hi) el.removeAttribute('aria-hidden'); else el.setAttribute('aria-hidden','true')});
+  [...$('#dots').children].forEach((b,k)=>b.setAttribute('aria-selected',k===hi));
+  hElapsed=0;
+}
+(function heroLoop(now){
+  if(!hLast) hLast=now;
+  const dt=now-hLast; hLast=now;
+  if(!hPaused && !hReduce && !document.hidden){ hElapsed+=dt; if(hElapsed>=HERO_MS) goSlide(hi+1); }
+  const bar=$('#slideBar'); if(bar) bar.style.width=(hReduce?0:Math.min(100,hElapsed/HERO_MS*100))+'%';
+  requestAnimationFrame(heroLoop);
+})(performance.now());
+{
+  const sl=$('#slider'); let x0=null;
+  sl.addEventListener('mouseenter',()=>hPaused=true);
+  sl.addEventListener('mouseleave',()=>hPaused=false);
+  sl.addEventListener('focusin',()=>hPaused=true);
+  sl.addEventListener('focusout',()=>hPaused=false);
+  sl.addEventListener('touchstart',e=>{hPaused=true;x0=e.touches[0].clientX},{passive:true});
+  sl.addEventListener('touchend',e=>{
+    const dx=e.changedTouches[0].clientX-(x0??e.changedTouches[0].clientX);
+    if(Math.abs(dx)>40) goSlide(hi+(dx<0?1:-1));
+    x0=null; setTimeout(()=>hPaused=false,2500);
+  });
+  $('#prevSlide').onclick=()=>goSlide(hi-1);
+  $('#nextSlide').onclick=()=>goSlide(hi+1);
+  $('#dots').addEventListener('click',e=>{const b=e.target.closest('[data-dot]'); if(b) goSlide(+b.dataset.dot)});
 }
 /* Stock: columna "stock" de la hoja. Vacía = sin control de stock. */
 const LOW_STOCK=20;
@@ -629,6 +752,7 @@ function toast(msg){const t=$('#toast');t.textContent=msg;t.hidden=false;clearTi
 document.addEventListener('click',e=>{
   const t=e.target;
   const c=t.closest('[data-cat]'); if(c){cat=c.dataset.cat;renderChips();renderGrid()}
+  const cg=t.closest('[data-catgo]'); if(cg){cat=cg.dataset.catgo;renderChips();renderGrid();$('#catalogo').scrollIntoView({behavior:'smooth'})}
   const v=t.closest('[data-view]'); if(v) openProduct(v.dataset.view);
   const a=t.closest('[data-add]'); if(a) add(a.dataset.add);
   const cq=t.closest('[data-cq]'); if(cq){
@@ -642,7 +766,7 @@ document.addEventListener('click',e=>{
   if(t.closest('#retryPay')){closeAll();openCart()}
 });
 $('#openCart').onclick=openCart;
-$('#heroDeal').onclick=()=>openProduct(DEAL);
+
 $('#q').addEventListener('input',e=>{query=e.target.value;cat='todos';renderChips();renderGrid()});
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&openEl)closeAll()});
 
