@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="24 20 426 696">
+  <defs>
+    <linearGradient id="bolt" gradientUnits="userSpaceOnUse" x1="360" y1="40" x2="140" y2="700">
+      <stop offset="0" stop-color="#B620F5"/><stop offset="0.45" stop-color="#2F3BFF"/><stop offset="1" stop-color="#14D2EE"/>
+    </linearGradient>
+    <linearGradient id="cart" gradientUnits="userSpaceOnUse" x1="170" y1="300" x2="330" y2="470">
+      <stop offset="0" stop-color="#3A2BFF"/><stop offset="1" stop-color="#1E7BFF"/>
+    </linearGradient>
+    <g id="c" stroke-linecap="round" stroke-linejoin="round" fill="none">
+      <path d="M174 322 H210 M192 322 L214 408 H296"/>
+      <path d="M198 342 H312 L298 392 H210"/>
+      <path d="M230 342 L236 392 M262 342 V392 M290 342 L282 392 M204 367 H305"/>
+      <circle cx="222" cy="430" r="11"/><circle cx="286" cy="430" r="11"/>
+    </g>
+    <mask id="m" maskUnits="userSpaceOnUse" x="0" y="0" width="480" height="740">
+      <rect width="480" height="740" fill="#fff"/>
+      <use href="#c" transform="translate(244 376) scale(1.27) translate(-240 -382)" stroke="#000" stroke-width="19"/>
+    </mask>
+  </defs>
+  <path d="M346 46 L60 436 H198 L134 690 L414 302 H264 Z" fill="none" stroke="url(#bolt)" stroke-width="30" stroke-linejoin="round" mask="url(#m)"/>
+  <use href="#c" transform="translate(244 376) scale(1.27) translate(-240 -382)" stroke="url(#cart)" stroke-width="15"/>
+</svg>
