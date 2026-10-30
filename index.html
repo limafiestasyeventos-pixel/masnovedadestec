@@ -115,7 +115,8 @@ a.btn{text-decoration:none}
   background:radial-gradient(circle at 35% 30%,#22347E,#0B1230 72%);border:1px solid rgba(124,134,255,.38)}
 .visual .disc>img:not(.logo-big){width:100%;height:100%;object-fit:cover}
 .visual .disc>svg{width:50%}
-.visual .disc .logo-big{width:40%;height:auto;filter:drop-shadow(0 0 18px rgba(47,59,255,.7))}
+.visual .disc.light{background:radial-gradient(circle at 50% 40%,#FFFFFF 0%,#EEF2FF 70%,#DCE3FF 100%);border-color:rgba(255,255,255,.9);box-shadow:0 0 0 6px rgba(255,255,255,.08),0 20px 60px rgba(47,59,255,.45)}
+.visual .disc .logo-big{width:44%;height:auto;filter:drop-shadow(0 6px 14px rgba(47,59,255,.35))}
 .slide.on .disc>*{animation:kb 4.4s ease-out forwards}
 @keyframes kb{from{transform:scale(1)}to{transform:scale(1.08)}}
 .visual .pricetag{position:absolute;right:2%;bottom:10%;background:var(--grad);color:#FFFFFF;font-family:var(--f-mono);font-weight:700;font-size:16px;padding:8px 12px;border-radius:12px;box-shadow:0 8px 22px rgba(47,59,255,.45)}
@@ -321,7 +322,7 @@ footer .wrap{padding-block:28px;display:flex;justify-content:space-between;gap:1
           <p>Gadgets novedosos para tu casa, tu celular y tu auto. Precios en soles, pago seguro y seguimiento de tu pedido por WhatsApp.</p>
           <div class="cta"><a class="btn primary" href="#catalogo">Ver productos</a></div>
         </div>
-        <div class="visual"><div class="ring"></div><div class="disc"><img class="logo-big" src="favicon.svg" alt=""></div></div>
+        <div class="visual"><div class="ring"></div><div class="disc light"><img class="logo-big" src="favicon.svg" alt=""></div></div>
       </div>
     </div>
     <button class="nav prev" id="prevSlide" aria-label="Diapositiva anterior">‹</button>
@@ -512,7 +513,7 @@ function heroSlides(){
     <h1>La tecnología que <span>todos quieren</span>, con envío a todo el Perú</h1>
     <p>Gadgets novedosos para tu casa, tu celular y tu auto. Precios en soles, pago seguro y seguimiento de tu pedido por WhatsApp.</p>
     <div class="cta"><a class="btn primary" href="#catalogo">Ver productos</a></div></div>
-    ${visual('<img class="logo-big" src="favicon.svg" alt="">')}`);
+    <div class="visual"><div class="ring"></div><div class="disc light"><img class="logo-big" src="favicon.svg" alt=""></div></div>`);
   const d=byId(DEAL);
   if(d) s.push(`<div class="copy"><span class="eyebrow">⚡ Oferta del día${off(d)>0?` · -${off(d)}%`:''}</span>
     <h2>${d.name}</h2>
