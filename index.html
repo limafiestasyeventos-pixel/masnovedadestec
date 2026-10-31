@@ -662,7 +662,7 @@ function parseVideo(u){
   if(m=u.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?(?:.*&)?v=|shorts\/|embed\/|live\/))([\w-]{11})/i))
     return {kind:'yt',id:m[1],vertical:/\/shorts\//i.test(u),thumb:`https://i.ytimg.com/vi/${m[1]}/hqdefault.jpg`};
   if(m=u.match(/tiktok\.com\/(?:.*\/)?(?:video|player\/v1)\/(\d+)/i)) return {kind:'tt',id:m[1],vertical:true};
-  if(/^https:\/\/((vm|vt)\.tiktok\.com\/|(www\.)?tiktok\.com\/t\/)\w+/i.test(u)) return {kind:'tts',src:esc(u),vertical:true};
+  if(m=u.match(/^https:\/\/(?:(?:vm|vt)\.tiktok\.com\/|(?:www\.)?tiktok\.com\/t\/)\w+/i)) return {kind:'tts',src:esc(m[0]+'/'),vertical:true};
   if(m=u.match(/drive\.google\.com\/(?:file\/d\/|open\?id=|uc\?(?:.*&)?id=)([\w-]{20,})/i))
     return {kind:'drive',id:m[1],vertical:true,thumb:`https://drive.google.com/thumbnail?id=${m[1]}&sz=w400`};
   if(/\.(mp4|webm|mov)(\?|$)/i.test(u)) return {kind:'file',src:esc(u),vertical:true};
@@ -998,6 +998,9 @@ async function loadSheet(){
     if(!items.length) throw new Error('La hoja no tiene productos activos');
     const P2=items.map((o,i)=>{
       const id=(o.id||'').toLowerCase().replace(/[^a-z0-9_-]/g,'')||'p'+i, price=num(o.precio), opts=list(o.opciones);
+      /* A link pasted by mistake into the name is taken out of it and used as the video */
+      const lnk=String(o.nombre).match(/https?:\/\/\S+/);
+      if(lnk){o.nombre=o.nombre.replace(lnk[0],' ').replace(/\s+/g,' ').trim();if(!o.video)o.video=lnk[0]}
       return {id,name:esc(o.nombre),cat:esc((o.categoria||'otros').toLowerCase()),price,was:Math.max(num(o.precio_antes),price),
         r:num(o.estrellas)||5,n:Math.round(num(o.resenas)),h:hue(id),tag:esc(o.etiqueta),colors:opts.length?opts:['Única'],
         desc:esc(o.descripcion),specs:list(o.caracteristicas),img:/^https:\/\//i.test(o.foto)?esc(o.foto):'',icon:o.icono||id,

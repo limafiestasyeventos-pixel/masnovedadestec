@@ -137,6 +137,8 @@ main .wrap{padding-block:24px 64px;display:grid;gap:16px}
 .extra.has{border-style:solid}
 .extra .rm{position:absolute;top:6px;right:6px;width:26px;height:26px;border-radius:50%;border:0;background:rgba(11,18,32,.75);color:#fff;font-size:13px;line-height:1;cursor:pointer}
 .vstate{font-size:12px;font-weight:700}
+.vrow{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center}
+.vnote{margin:0;background:#E9F8F1;border:1px solid #9BDDBF;color:#0B5B3B;border-radius:10px;padding:10px 12px;font-size:13px}
 .vstate.ok{color:#0E9F6E}
 .vstate.bad{color:#D92D20}
 .colwarn{background:#FFF7E6;border:1px solid #F5C26B;color:#7A4B00;border-radius:10px;padding:10px 12px;font-size:13px}
@@ -242,8 +244,9 @@ main .wrap{padding-block:24px 64px;display:grid;gap:16px}
       <span class="hint">Toca un cuadro para subir otra foto: el producto en uso, de costado, la caja…</span>
     </div>
     <div class="field"><label for="f-video">Video (opcional)</label>
-      <input id="f-video" inputmode="url" placeholder="Pega el enlace de YouTube, TikTok o Google Drive">
+      <div class="vrow"><input id="f-video" inputmode="url" placeholder="Enlace de YouTube, TikTok o Google Drive"><button type="button" class="btn sm primary" id="pasteVideo">Pegar enlace</button></div>
       <span class="vstate" id="vState"></span>
+      <p class="vnote" id="vMoved" hidden>Encontré un enlace pegado dentro del nombre y lo pasé aquí. Revisa que el nombre esté bien y toca <b>Guardar producto</b>.</p>
       <span class="hint">Sube el video a YouTube (puede ser "No listado") o a tu Google Drive compartido con "Cualquier persona con el enlace" y pega aquí el enlace.</span>
     </div>
     <div class="field"><label for="f-nombre">Nombre del producto</label><input id="f-nombre" required placeholder="Ej. Mini proyector 4K portátil"></div>
@@ -431,6 +434,13 @@ function openSheet(p){
   extras=String(p&&p.fotos||'').split('|').map(x=>x.trim()).filter(u=>/^https:\/\//i.test(u)).slice(0,MAX_EXTRAS).map(url=>({url}));
   renderExtras();
   $('#f-video').value=p?String(p.video||'').trim():'';
+  /* Si quedó un enlace pegado dentro del nombre, se pasa al campo Video */
+  const lnk=$('#f-nombre').value.match(/https?:\/\/\S+/);
+  $('#vMoved').hidden=!lnk;
+  if(lnk){
+    $('#f-nombre').value=$('#f-nombre').value.replace(lnk[0],' ').replace(/\s+/g,' ').trim();
+    if(!$('#f-video').value.trim()) $('#f-video').value=lnk[0];
+  }
   showVideoState();fixTikTok();
   const missing=products.length?['fotos','video'].filter(k=>!(k in products[0])):[];
   $('#colWarn').hidden=!missing.length;
@@ -497,7 +507,8 @@ async function fixTikTok(){
   const inp=$('#f-video'), u=inp.value.trim();
   if(videoKind(u)!=='tiktok-corto') return;
   try{
-    const j=await (await fetch('https://www.tiktok.com/oembed?url='+encodeURIComponent(u))).json();
+    const corto=u.match(/^https:\/\/(?:(?:vm|vt)\.tiktok\.com\/|(?:www\.)?tiktok\.com\/t\/)\w+/i)[0]+'/';
+    const j=await (await fetch('https://www.tiktok.com/oembed?url='+encodeURIComponent(corto))).json();
     if(!/^\d+$/.test(j.embed_product_id)) throw new Error('sin id');
     if(inp.value.trim()===u){inp.value='https://www.tiktok.com/player/v1/'+j.embed_product_id;showVideoState()}
   }catch(e){
@@ -506,6 +517,15 @@ async function fixTikTok(){
   }
 }
 $('#f-video').addEventListener('input',()=>{showVideoState();fixTikTok()});
+/* Un toque pega lo copiado justo en el campo Video, sin depender de dónde esté el cursor */
+$('#pasteVideo').onclick=async()=>{
+  try{
+    const t=(await navigator.clipboard.readText()).trim();
+    const u=(t.match(/https?:\/\/\S+/)||[''])[0];
+    if(!u) return toast('Lo que copiaste no es un enlace. Copia el enlace del video y vuelve a tocar "Pegar enlace".',true);
+    $('#f-video').value=u;showVideoState();fixTikTok();
+  }catch(e){toast('Tu celular no dejó pegar. Mantén presionado el campo Video y elige Pegar.',true);$('#f-video').focus()}
+};
 
 /* Reduce la foto a 1000 px como máximo para que la tienda cargue rápido */
 function shrink(file){
