@@ -435,7 +435,9 @@ function openSheet(p){
   const missing=products.length?['fotos','video'].filter(k=>!(k in products[0])):[];
   $('#colWarn').hidden=!missing.length;
   $('#colWarn').innerHTML=`Para guardar ${missing.length>1?'más fotos y el video':missing[0]==='fotos'?'más fotos':'el video'}, abre tu Google Sheets y escribe en la fila 1, en columnas vacías al final, ${missing.map(k=>`<b>${k}</b>`).join(' y ')}. Luego vuelve a abrir este producto.`;
-  $('#scrim').hidden=false;$('#sheet').hidden=false;$('#f-nombre').focus();
+  $('#scrim').hidden=false;$('#sheet').hidden=false;
+  /* En el celular no se abre el teclado solo: pegar con el teclado caería en el nombre */
+  if(!p&&matchMedia('(pointer:fine)').matches) $('#f-nombre').focus(); else $('#sheet').querySelector('form').scrollTop=0;
 }
 function closeSheet(){$('#scrim').hidden=true;$('#sheet').hidden=true;editing=null;pendingPhoto=null;extras=[];$('#f-file').value=''}
 $('#addBtn').onclick=()=>openSheet(null);
@@ -525,8 +527,9 @@ $('#editForm').addEventListener('submit',async e=>{
   const err=$('#formError'),btn=$('#saveBtn');err.hidden=true;
   const nombre=$('#f-nombre').value.trim(),precio=parseFloat($('#f-precio').value);
   let cat=$('#f-cat').value==='__new'?$('#f-newcat').value.trim().toLowerCase():$('#f-cat').value;
-  const fail=m=>{err.textContent=m;err.hidden=false};
+  const fail=m=>{err.textContent=m;err.hidden=false;err.scrollIntoView({block:'nearest',behavior:'smooth'})};
   if(!nombre) return fail('Escribe el nombre del producto.');
+  if(/https?:\/\/|www\./i.test(nombre)) return fail('El nombre tiene un enlace pegado. Bórralo del nombre y pega el enlace en el campo Video.');
   if(!(precio>0)) return fail('Escribe un precio mayor que 0.');
   if(!cat) return fail('Elige una categoría o escribe el nombre de la nueva.');
   const antes=parseFloat($('#f-antes').value)||'';
