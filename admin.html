@@ -431,7 +431,7 @@ function openSheet(p){
   extras=String(p&&p.fotos||'').split('|').map(x=>x.trim()).filter(u=>/^https:\/\//i.test(u)).slice(0,MAX_EXTRAS).map(url=>({url}));
   renderExtras();
   $('#f-video').value=p?String(p.video||'').trim():'';
-  showVideoState();
+  showVideoState();fixTikTok();
   const missing=products.length?['fotos','video'].filter(k=>!(k in products[0])):[];
   $('#colWarn').hidden=!missing.length;
   $('#colWarn').innerHTML=`Para guardar ${missing.length>1?'más fotos y el video':missing[0]==='fotos'?'más fotos':'el video'}, abre tu Google Sheets y escribe en la fila 1, en columnas vacías al final, ${missing.map(k=>`<b>${k}</b>`).join(' y ')}. Luego vuelve a abrir este producto.`;
@@ -476,19 +476,34 @@ function videoKind(u){
   if(!u) return '';
   if(!/^https:\/\//i.test(u)) return null;
   if(/(youtu\.be\/|youtube\.com\/(watch\?(.*&)?v=|shorts\/|embed\/|live\/))[\w-]{11}/i.test(u)) return 'YouTube';
-  if(/tiktok\.com\/.*\/video\/\d+/i.test(u)) return 'TikTok';
+  if(/tiktok\.com\/(.*\/)?(video|player\/v1)\/\d+/i.test(u)) return 'TikTok';
+  if(/^https:\/\/((vm|vt)\.tiktok\.com\/|(www\.)?tiktok\.com\/t\/)\w+/i.test(u)) return 'tiktok-corto';
   if(/drive\.google\.com\/(file\/d\/|open\?id=|uc\?(.*&)?id=)[\w-]{20,}/i.test(u)) return 'Google Drive';
   if(/\.(mp4|webm|mov)(\?|$)/i.test(u)) return 'archivo de video';
   return 'otro';
 }
 function showVideoState(){
   const k=videoKind($('#f-video').value), el=$('#vState');
+  if(k==='tiktok-corto'){el.className='vstate';el.textContent='Revisando el enlace de TikTok…';return}
   el.className='vstate'+(k===null||k==='otro'?' bad':k?' ok':'');
   el.textContent=k===null?'El enlace debe empezar con https://'
     :k==='otro'?'No reconozco este enlace: en la tienda saldrá como un botón para abrir el video. Si es TikTok, copia el enlace completo desde el navegador.'
     :k?`✓ Video de ${k} listo`:'';
 }
-$('#f-video').addEventListener('input',showVideoState);
+/* El enlace corto de TikTok (vt.tiktok.com/…) se cambia por el del video para que se vea dentro de la tienda */
+async function fixTikTok(){
+  const inp=$('#f-video'), u=inp.value.trim();
+  if(videoKind(u)!=='tiktok-corto') return;
+  try{
+    const j=await (await fetch('https://www.tiktok.com/oembed?url='+encodeURIComponent(u))).json();
+    if(!/^\d+$/.test(j.embed_product_id)) throw new Error('sin id');
+    if(inp.value.trim()===u){inp.value='https://www.tiktok.com/player/v1/'+j.embed_product_id;showVideoState()}
+  }catch(e){
+    const el=$('#vState');el.className='vstate bad';
+    el.textContent='No pude abrir ese enlace de TikTok. Revisa que el video sea público o copia el enlace desde el navegador.';
+  }
+}
+$('#f-video').addEventListener('input',()=>{showVideoState();fixTikTok()});
 
 /* Reduce la foto a 1000 px como máximo para que la tienda cargue rápido */
 function shrink(file){

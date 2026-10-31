@@ -244,7 +244,9 @@ footer .wrap{padding-block:28px;display:flex;justify-content:space-between;gap:1
 .modal .tile svg{width:46%}
 .modal .info{padding:24px;display:grid;gap:12px;align-content:start;min-width:0}
 .modal .info .x{justify-self:end}
-.modal h2{font-size:24px}
+.modal{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+.modal h2{font-size:24px;overflow-wrap:anywhere}
+.modal .desc,.card h3{overflow-wrap:anywhere}
 .modal .desc{color:var(--muted);margin:0}
 .specs{display:flex;flex-wrap:wrap;gap:6px;list-style:none;padding:0;margin:0}
 .specs li{font-size:12px;font-family:var(--f-mono);border:1px solid var(--line);border-radius:6px;padding:3px 8px}
@@ -261,7 +263,7 @@ footer .wrap{padding-block:28px;display:flex;justify-content:space-between;gap:1
 .stock-bar i{display:block;height:100%;background:var(--hot);border-radius:6px}
 .card.soldout .tile{filter:grayscale(1);opacity:.65}
 .card .add[disabled],.btn[disabled]{opacity:.55;cursor:not-allowed}
-@media (max-width:720px){.modal{grid-template-columns:1fr}.modal .tile{min-height:200px}}
+@media (max-width:720px){.modal{grid-template-columns:minmax(0,1fr)}.modal .tile{min-height:200px}}
 
 /* product gallery + video */
 .vchip{position:absolute;z-index:1;right:10px;bottom:10px;display:inline-flex;align-items:center;gap:5px;background:rgba(7,11,20,.8);color:#fff;font-size:11px;font-weight:800;border-radius:999px;padding:4px 10px 4px 5px}
@@ -659,7 +661,8 @@ function parseVideo(u){
   let m;
   if(m=u.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?(?:.*&)?v=|shorts\/|embed\/|live\/))([\w-]{11})/i))
     return {kind:'yt',id:m[1],vertical:/\/shorts\//i.test(u),thumb:`https://i.ytimg.com/vi/${m[1]}/hqdefault.jpg`};
-  if(m=u.match(/tiktok\.com\/.*\/video\/(\d+)/i)) return {kind:'tt',id:m[1],vertical:true};
+  if(m=u.match(/tiktok\.com\/(?:.*\/)?(?:video|player\/v1)\/(\d+)/i)) return {kind:'tt',id:m[1],vertical:true};
+  if(/^https:\/\/((vm|vt)\.tiktok\.com\/|(www\.)?tiktok\.com\/t\/)\w+/i.test(u)) return {kind:'tts',src:esc(u),vertical:true};
   if(m=u.match(/drive\.google\.com\/(?:file\/d\/|open\?id=|uc\?(?:.*&)?id=)([\w-]{20,})/i))
     return {kind:'drive',id:m[1],vertical:true,thumb:`https://drive.google.com/thumbnail?id=${m[1]}&sz=w400`};
   if(/\.(mp4|webm|mov)(\?|$)/i.test(u)) return {kind:'file',src:esc(u),vertical:true};
@@ -668,11 +671,22 @@ function parseVideo(u){
 function videoEmbed(v){
   const frame=src=>`<iframe src="${src}" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin" title="Video del producto"></iframe>`;
   if(v.kind==='yt') return frame(`https://www.youtube-nocookie.com/embed/${v.id}?autoplay=1&rel=0&playsinline=1`);
+  if(v.kind==='tts') return `<iframe data-tts="${v.src}" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen title="Video del producto"></iframe>`;
   if(v.kind==='tt') return frame(`https://www.tiktok.com/player/v1/${v.id}?autoplay=1&rel=0`);
   if(v.kind==='drive') return frame(`https://drive.google.com/file/d/${v.id}/preview`);
   if(v.kind==='file') return `<video src="${v.src}" controls autoplay playsinline></video>`;
   return `<a class="vlink" href="${v.src}" target="_blank" rel="noopener"><i>▶</i>Abrir el video</a>`;
 }
+/* Short TikTok links (vt.tiktok.com/…) get their video id from TikTok's oEmbed when the viewer shows them */
+const TT_IDS={};
+new MutationObserver(()=>$('#lb').querySelectorAll('iframe[data-tts]').forEach(async f=>{
+  const u=f.dataset.tts; f.removeAttribute('data-tts');
+  try{
+    const id=TT_IDS[u]||(TT_IDS[u]=(await (await fetch('https://www.tiktok.com/oembed?url='+encodeURIComponent(u))).json()).embed_product_id);
+    if(!/^\d+$/.test(id)) throw new Error('sin id');
+    f.src=`https://www.tiktok.com/player/v1/${id}?autoplay=1&rel=0`;
+  }catch(e){f.outerHTML=`<a class="vlink" href="${esc(u)}" target="_blank" rel="noopener"><i>▶</i>Abrir el video</a>`}
+})).observe($('#lb'),{childList:true});
 const imgsOf=p=>p.imgs||(p.img?[p.img]:[]);
 function gallery(p){
   const imgs=imgsOf(p);
