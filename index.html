@@ -301,6 +301,10 @@ footer .wrap{padding-block:28px;display:flex;justify-content:space-between;gap:1
 .lb-media svg{width:50%;color:#A9B7FF}
 .lb .thumbs{justify-content:center;padding:14px 16px max(18px,env(safe-area-inset-bottom))}
 .lb .thumbs button{border-color:rgba(255,255,255,.18)}
+/* video: vertical first, as big as the phone screen allows */
+.lb.vid .thumbs{display:none}
+.lb.vid .lb-media.vert{width:min(calc(100% - 16px),calc((100dvh - 84px) * .5625))}
+.lb.vid .lb-media:not(.vert){aspect-ratio:16/9;width:min(calc(100% - 16px),calc((100dvh - 84px) * 1.7778))}
 
 .checkout form{display:grid;gap:12px}
 .field{display:grid;gap:4px}
@@ -657,8 +661,8 @@ function parseVideo(u){
     return {kind:'yt',id:m[1],vertical:/\/shorts\//i.test(u),thumb:`https://i.ytimg.com/vi/${m[1]}/hqdefault.jpg`};
   if(m=u.match(/tiktok\.com\/.*\/video\/(\d+)/i)) return {kind:'tt',id:m[1],vertical:true};
   if(m=u.match(/drive\.google\.com\/(?:file\/d\/|open\?id=|uc\?(?:.*&)?id=)([\w-]{20,})/i))
-    return {kind:'drive',id:m[1],thumb:`https://drive.google.com/thumbnail?id=${m[1]}&sz=w400`};
-  if(/\.(mp4|webm|mov)(\?|$)/i.test(u)) return {kind:'file',src:esc(u)};
+    return {kind:'drive',id:m[1],vertical:true,thumb:`https://drive.google.com/thumbnail?id=${m[1]}&sz=w400`};
+  if(/\.(mp4|webm|mov)(\?|$)/i.test(u)) return {kind:'file',src:esc(u),vertical:true};
   return {kind:'link',src:esc(u)};
 }
 function videoEmbed(v){
@@ -687,11 +691,11 @@ function gallery(p){
   const thumbs=i=>media.length<2?'':`<div class="thumbs">${media.map((x,k)=>`<button type="button" data-gi="${k}" aria-current="${k===i}" aria-label="${x.t==='video'?'Ver video':'Foto '+(k+1)}"${x.t==='video'?' class="vt"':x.t==='art'?` class="tile" style="--h:${p.h}"`:''}>${
     x.t==='img'?`<img src="${x.src}" alt="" loading="lazy">`:x.t==='art'?art(p):(p.video.thumb?`<img src="${p.video.thumb}" alt="" onerror="this.remove()">`:'')+'<span>Video</span>'}</button>`).join('')}</div>`;
   const cls=i=>media[i].t==='video'?' playing'+(p.video.vertical?' vert':''):'';
-  return {media,photos,stage,thumbs,cls};
+  return {media,photos,vi,stage,thumbs,cls};
 }
 function openViewer(p,G,start,onClose){
   const lb=$('#lb'); let i=start, x0=null;
-  const draw=()=>{lb.innerHTML=`
+  const draw=()=>{lb.classList.toggle('vid',G.media[i].t==='video');lb.innerHTML=`
     <div class="lb-top"><b>${p.name}</b><button type="button" class="lb-x" data-lbx aria-label="Cerrar">✕</button></div>
     <div class="lb-media${G.cls(i)}">${G.stage(i,true)}</div>
     ${G.thumbs(i)}`};
@@ -747,7 +751,7 @@ function openProduct(id){
   gal.ontouchend=e=>{if(x0==null)return;const dx=e.changedTouches[0].clientX-x0;x0=null;if(Math.abs(dx)>40&&G.media[gi].t!=='video') stepGal(dx<0?1:-1)};
   m.onclick=e=>{
     const g=e.target.closest('[data-gi]'), s=e.target.closest('[data-gstep]');
-    if(g){gi=+g.dataset.gi;drawGal()}
+    if(g){if(+g.dataset.gi===G.vi) openViewer(p,G,G.vi,i=>{if(G.media[i].t!=='video'){gi=i;drawGal()}}); else{gi=+g.dataset.gi;drawGal()}}
     if(s) stepGal(+s.dataset.gstep);
     if(e.target.closest('[data-zoom]')) openViewer(p,G,gi,i=>{if(G.media[i].t!=='video'){gi=i;drawGal()}});
     const o=e.target.closest('[data-v]'), d=e.target.closest('[data-q]');
