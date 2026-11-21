@@ -206,6 +206,9 @@ section.catalog .wrap{padding-block:48px}
 /* the same button pair everywhere: "Ver más" (outline) + "Agregar" (solid blue) */
 .card-actions{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) 42px;grid-template-areas:"more add wa";gap:8px;margin-top:8px;align-items:center}
 @media (max-width:720px){.card-actions{grid-template-columns:minmax(0,1fr) 42px;grid-template-areas:"add wa" "more more"}}
+/* narrow cards at any screen size (e.g. 4 columns on a 1024px laptop): two rows so labels never get cut */
+.card{container-type:inline-size}
+@container (max-width:270px){.card-actions{grid-template-columns:minmax(0,1fr) 42px;grid-template-areas:"add wa" "more more"}}
 .add,.more{height:42px;min-width:0;border-radius:999px;padding:0 12px;font-weight:700;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .add{grid-area:add;border:0;background:var(--press);color:#fff}
 .more{grid-area:more;border:1px solid var(--line);background:transparent;color:var(--ink)}
