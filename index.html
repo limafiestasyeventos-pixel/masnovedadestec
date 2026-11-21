@@ -158,6 +158,7 @@ a.btn{text-decoration:none}
 .featured .wrap{padding-block:40px 0}
 .featured h2{font-size:30px;letter-spacing:-.02em;margin-bottom:16px}
 .feat-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.feat-grid.single{grid-template-columns:minmax(0,1fr)}
 @media (max-width:720px){.feat-grid{grid-template-columns:minmax(0,1fr)}}
 .feat{border-radius:20px;overflow:hidden;background:var(--photo-bg);color:var(--ink);text-align:center;padding:36px 24px 0;display:grid;justify-items:center;align-content:start;gap:6px;min-width:0}
 .feat.dark{background:var(--band);color:var(--band-ink)}
@@ -608,15 +609,14 @@ function renderGrid(){
       </div>
     </article>`).join(''):`<p class="empty">No encontramos productos para “${query}”. Prueba con otra palabra.</p>`;
 }
-/* Featured: products marked "destacado" first (except the deal of the day, already in the carousel),
-   then the biggest discounts. Two tiles, light and dark, Apple-style. */
+/* Featured: ONLY the products the owner marked "SI" in the sheet's "destacado" column
+   (sold-out ones are skipped). Up to 2 tiles, light and dark, Apple-style; one marked = one wide tile;
+   none marked = the section is hidden. */
 function renderFeatured(){
   const sec=$('#destacados'); if(!sec) return;
-  const ok=P.filter(p=>!soldOut(p)&&p.id!==DEAL);
-  /* order: marked "destacado" > has a real photo > biggest discount */
-  const score=p=>(p.feat?2:0)+(p.img?1:0);
-  const pick=ok.slice().sort((a,b)=>score(b)-score(a)||off(b)-off(a)).slice(0,2);
-  if(loading||pick.length<2){sec.hidden=true;return}
+  const pick=P.filter(p=>p.feat&&!soldOut(p)).slice(0,2);
+  if(loading||!pick.length){sec.hidden=true;return}
+  $('#featured').classList.toggle('single',pick.length===1);
   $('#featured').innerHTML=pick.map((p,i)=>`
     <article class="feat${i?' dark':''}" style="--h:${p.h}">
       <h3>${p.name}</h3>
