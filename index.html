@@ -34,15 +34,17 @@
   --f-body:"Manrope",ui-sans-serif,system-ui,sans-serif;
   --f-mono:"JetBrains Mono",ui-monospace,Consolas,monospace;
   --ease-out:cubic-bezier(.23,1,.32,1); --ease-in-out:cubic-bezier(.77,0,.175,1); --ease-drawer:cubic-bezier(.32,.72,0,1);
+  --hot-fill:#D9233A; /* filled red badges: white text stays readable in both themes */
+  --star:#B07600;
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
   --bg:#0A0F17; --surface:#121A26; --ink:#E9EEF6; --muted:#97A2B5; --line:#243044;
   --accent:#7C86FF; --accent-ink:#06102A; --hot:#FF5A6C; --ok:#3FCB96; --band:#05080F; --band-ink:#E9EEF6;
-  --tile-s:40%; --tile-l:17%; --tile-fg:72%; --shadow:0 12px 40px rgba(0,0,0,.5); color-scheme:dark}}
+  --tile-s:40%; --tile-l:17%; --tile-fg:72%; --shadow:0 12px 40px rgba(0,0,0,.5); --star:#F2B33D; color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#0A0F17; --surface:#121A26; --ink:#E9EEF6; --muted:#97A2B5; --line:#243044;
   --accent:#7C86FF; --accent-ink:#06102A; --hot:#FF5A6C; --ok:#3FCB96; --band:#05080F; --band-ink:#E9EEF6;
-  --tile-s:40%; --tile-l:17%; --tile-fg:72%; --shadow:0 12px 40px rgba(0,0,0,.5); color-scheme:dark}
+  --tile-s:40%; --tile-l:17%; --tile-fg:72%; --shadow:0 12px 40px rgba(0,0,0,.5); --star:#F2B33D; color-scheme:dark}
 
 *{box-sizing:border-box}
 body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.55}
@@ -67,7 +69,7 @@ header.bar .wrap{display:flex;align-items:center;gap:16px;padding-block:12px}
 .search{flex:1;min-width:0;display:flex;align-items:center;gap:8px;background:var(--bg);border:1px solid var(--line);border-radius:999px;padding:8px 14px}
 .search input{border:0;background:transparent;outline:0;flex:1;min-width:0;font:inherit;color:var(--ink)}
 .cart-btn{position:relative;display:flex;align-items:center;gap:8px;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:8px 14px;font-weight:700}
-.cart-btn .count{background:var(--hot);color:#fff;border-radius:999px;min-width:22px;height:22px;display:grid;place-items:center;font-size:12px;padding:0 6px}
+.cart-btn .count{background:var(--hot-fill);color:#fff;border-radius:999px;min-width:22px;height:22px;display:grid;place-items:center;font:800 12px var(--f-body);font-variant-numeric:tabular-nums;padding:0 6px}
 @media (max-width:640px){.search{display:none}.logo{font-size:17px}header.bar .wrap{justify-content:space-between}}
 @media (max-width:420px){.cart-btn>span:not(.count){display:none}.cart-btn{padding:8px 12px}}
 
@@ -115,7 +117,6 @@ a.btn{text-decoration:none}
   background:radial-gradient(circle at 35% 30%,#22347E,#0B1230 72%);border:1px solid rgba(124,134,255,.38)}
 .visual .disc>img:not(.logo-big){width:100%;height:100%;object-fit:cover}
 .visual .disc>svg{width:50%}
-.visual .disc.light{background:radial-gradient(circle at 50% 40%,#FFFFFF 0%,#EEF2FF 70%,#DCE3FF 100%);border-color:rgba(255,255,255,.9);box-shadow:0 0 0 6px rgba(255,255,255,.08),0 20px 60px rgba(47,59,255,.45)}
 .visual .disc .logo-big{width:44%;height:auto;filter:drop-shadow(0 6px 14px rgba(47,59,255,.35))}
 /* first slide: no circle, just the white logo glowing on the slide */
 .visual .disc.bare{background:none;border:0;box-shadow:none;overflow:visible}
@@ -127,9 +128,12 @@ a.btn{text-decoration:none}
 .nav{position:absolute;top:50%;transform:translateY(-50%);z-index:2;width:42px;height:42px;border-radius:50%;border:1px solid rgba(255,255,255,.24);background:rgba(7,11,20,.45);color:#FFFFFF;font-size:24px;line-height:1;display:grid;place-items:center;backdrop-filter:blur(6px)}
 .nav:hover{background:rgba(47,59,255,.55)}
 .nav.prev{left:12px}.nav.next{right:12px}
-.dots{position:absolute;left:64px;bottom:26px;z-index:2;display:flex;gap:8px}
-.dots button{width:9px;height:9px;border-radius:999px;border:0;padding:0;background:rgba(255,255,255,.35);transition:width .3s var(--ease-out),background .3s ease}
-.dots button[aria-selected="true"]{width:28px;background:#FFFFFF}
+/* dots: 24px tap area around a small visual pill */
+.dots{position:absolute;left:56px;bottom:18px;z-index:2;display:flex}
+.dots button{width:24px;height:24px;border:0;padding:0;background:none;display:grid;place-items:center;transition:width .3s var(--ease-out)}
+.dots button::before{content:"";width:9px;height:9px;border-radius:999px;background:rgba(255,255,255,.35);transition:width .3s var(--ease-out),background-color .3s ease}
+.dots button[aria-selected="true"]{width:40px}
+.dots button[aria-selected="true"]::before{width:28px;background:#FFFFFF}
 .slider .progress{position:absolute;left:0;right:0;bottom:0;height:3px;background:rgba(255,255,255,.08)}
 .slider .progress i{display:block;height:100%;width:100%;background:var(--grad);transform:scaleX(0);transform-origin:left}
 @media (max-width:760px){
@@ -137,7 +141,7 @@ a.btn{text-decoration:none}
   .slide .visual{order:-1;max-width:190px}
   .slide p{font-size:15px;margin:10px 0 18px}
   .nav{display:none}
-  .dots{left:20px;bottom:22px}
+  .dots{left:12px;bottom:14px}
 }
 
 /* trust strip */
@@ -168,7 +172,7 @@ section.catalog .wrap{padding-block:48px}
 .card .body{padding:14px;display:flex;flex-direction:column;gap:6px;flex:1;min-width:0}
 .card h3{font-family:var(--f-body);font-size:15px;font-weight:700;line-height:1.3}
 .stars{font-size:12px;color:var(--muted)}
-.stars b{color:#E7A10B}
+.stars b{color:var(--star)}
 .price{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap;margin-top:auto}
 .price .now{font-family:var(--f-mono);font-weight:600;font-size:18px}
 .price .was{font-family:var(--f-mono);font-size:13px;color:var(--muted);text-decoration:line-through}
@@ -209,9 +213,10 @@ details[open] summary::after{content:"–"}
 details p{color:var(--muted);margin:8px 0 0}
 
 footer{border-top:1px solid var(--line);background:var(--surface);font-size:13px;color:var(--muted)}
-.admin-link{color:var(--muted);opacity:.35;display:inline-grid;place-items:center;padding:4px;border-radius:6px}
+.admin-link{color:var(--muted);opacity:.35;display:inline-grid;place-items:center;padding:5px;border-radius:6px}
 .admin-link:hover,.admin-link:focus-visible{opacity:1}
 footer .wrap{padding-block:28px;display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
+@media (max-width:640px){footer .wrap{padding-bottom:calc(96px + env(safe-area-inset-bottom,0px))}} /* keep the floating WhatsApp button off the last lines */
 
 /* overlays */
 .scrim{position:fixed;inset:0;background:rgba(5,9,16,.55);z-index:40;animation:fade .2s ease}
@@ -335,7 +340,7 @@ footer .wrap{padding-block:28px;display:flex;justify-content:space-between;gap:1
 .wa-bubble::after{content:"";position:absolute;right:-6px;top:50%;width:10px;height:10px;background:var(--surface);border-right:1px solid var(--line);border-top:1px solid var(--line);transform:translateY(-50%) rotate(45deg)}
 .wa-btn{position:relative;width:60px;height:60px;border-radius:50%;background:#25D366;color:#fff;display:grid;place-items:center;box-shadow:0 8px 24px rgba(37,211,102,.45);transition:transform .2s}
 .wa-btn::before{content:"";position:absolute;inset:0;border-radius:50%;background:#25D366;animation:wa-pulse 2.2s ease-out infinite;z-index:-1}
-.wa-btn .dot{position:absolute;top:2px;right:2px;width:16px;height:16px;border-radius:50%;background:var(--hot);border:2px solid var(--bg);font-size:10px;font-weight:800;display:grid;place-items:center;color:#fff}
+.wa-btn .dot{position:absolute;top:2px;right:2px;width:16px;height:16px;border-radius:50%;background:var(--hot-fill);border:2px solid var(--bg);font-size:10px;font-weight:800;display:grid;place-items:center;color:#fff}
 @keyframes wa-pulse{0%{transform:scale(1);opacity:.6}100%{transform:scale(1.6);opacity:0}}
 @media (max-width:640px){.wa-bubble{display:none}.wa-btn{width:56px;height:56px}}
 /* press feedback: every tappable thing answers the finger */
@@ -357,7 +362,11 @@ footer .wrap{padding-block:28px;display:flex;justify-content:space-between;gap:1
 }
 .count.bump{animation:bump .3s var(--ease-out)}
 @keyframes bump{40%{transform:scale(1.25)}}
-@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+/* reduced motion: no movement, but keep short fades so state changes are still visible */
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none!important;transition-property:opacity,color,background-color,border-color!important;transition-duration:.15s!important}
+  .scrim,.lb,.drawer,.modal,.toast{animation:fade .2s ease!important}
+}
 </style>
 
 <div class="promo"><div class="wrap">
@@ -424,9 +433,9 @@ footer .wrap{padding-block:28px;display:flex;justify-content:space-between;gap:1
 <section class="split"><div class="wrap">
   <div>
     <h2>Lo que dicen nuestros clientes</h2>
-    <div class="review"><span class="stars"><b>★★★★★</b></span><p>“El mini proyector llegó a Arequipa en 4 días. Lo uso para ver películas en el cuarto y se ve buenazo.”</p><small>Carla M. · Arequipa · Mini proyector 4K</small></div>
-    <div class="review"><span class="stars"><b>★★★★★</b></span><p>“Pagué con Yape y al día siguiente ya tenía los audífonos. La cancelación de ruido sí funciona.”</p><small>Diego R. · Miraflores, Lima · Audífonos Pro ANC</small></div>
-    <div class="review"><span class="stars"><b>★★★★☆</b></span><p>“La lámpara luna fue el regalo perfecto. Demoró un día más de lo que decía, pero me avisaron por WhatsApp.”</p><small>Lucía T. · Trujillo · Lámpara luna 3D</small></div>
+    <div class="review"><span class="stars"><b role="img" aria-label="5 de 5 estrellas">★★★★★</b></span><p>“El mini proyector llegó a Arequipa en 4 días. Lo uso para ver películas en el cuarto y se ve buenazo.”</p><small>Carla M. · Arequipa · Mini proyector 4K</small></div>
+    <div class="review"><span class="stars"><b role="img" aria-label="5 de 5 estrellas">★★★★★</b></span><p>“Pagué con Yape y al día siguiente ya tenía los audífonos. La cancelación de ruido sí funciona.”</p><small>Diego R. · Miraflores, Lima · Audífonos Pro ANC</small></div>
+    <div class="review"><span class="stars"><b role="img" aria-label="4 de 5 estrellas">★★★★☆</b></span><p>“La lámpara luna fue el regalo perfecto. Demoró un día más de lo que decía, pero me avisaron por WhatsApp.”</p><small>Lucía T. · Trujillo · Lámpara luna 3D</small></div>
   </div>
   <div>
     <h2>Preguntas frecuentes</h2>
@@ -539,7 +548,7 @@ try{savedCart=JSON.parse(localStorage.getItem('mnt-cart')||'[]')||[]}catch(e){sa
 cart=savedCart.filter(l=>byId(l.id));
 const save=()=>{try{localStorage.setItem('mnt-cart',JSON.stringify(cart))}catch(e){}};
 
-function stars(r){return '<b>'+'★'.repeat(Math.round(r))+'</b>'+'☆'.repeat(5-Math.round(r))}
+function stars(r){const n=Math.round(r);return `<span role="img" aria-label="${n} de 5 estrellas"><b>${'★'.repeat(n)}</b>${'☆'.repeat(5-n)}</span>`}
 
 function renderChips(){
   $('#chips').innerHTML=CATS.map(([k,l])=>`<button class="chip" data-cat="${k}" aria-pressed="${k===cat}">${l}</button>`).join('');
